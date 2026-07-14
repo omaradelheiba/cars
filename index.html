@@ -8,7 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     window.process = { env: { NODE_ENV: 'production' } };
-    import { Facebook, TikTok, Instagram } from 'lucide-react'; // تأكد من تثبيت المكتبة: npm install lucide-react
+   
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -672,6 +672,7 @@
         passengers: Array(12).fill({ nat: '', id: '', name: '' })
       });
 
+     import { Facebook, TikTok, Instagram } from 'lucide-react'; // تأكد من تثبيت المكتبة: npm install lucide-react
       const updatePass = (index, field, value) => { const newP = [...data.passengers]; newP[index] = { ...newP[index], [field]: value }; setData({ ...data, passengers: newP }); };
 
       const handleSaveAndGenerate = async () => {

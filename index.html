@@ -7,27 +7,29 @@
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Polyfill لضمان عدم تعطل المكتبات في المتصفح
     window.process = { env: { NODE_ENV: 'production' } };
     
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          colors: {
+            brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e', 950: '#082f49' },
+            gold: { 400: '#fbbf24', 500: '#f59e0b' }
+          },
           animation: {
             'fade-in': 'fadeIn 1s ease-out forwards',
             'slide-up': 'slideUp 0.8s ease-out forwards',
-            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'ken-burns': 'kenBurns 15s ease-out infinite alternate',
+            'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
           },
           keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
-            },
-            slideUp: {
-              '0%': { opacity: '0', transform: 'translateY(40px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            }
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(50px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-15px)' } },
+            kenBurns: { '0%': { transform: 'scale(1)' }, '100%': { transform: 'scale(1.15)' } },
+            pulseGlow: { '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(14, 165, 233, 0.5)' }, '50%': { opacity: '0.5', boxShadow: '0 0 30px rgba(14, 165, 233, 0.8)' } }
           }
         }
       }
@@ -35,24 +37,37 @@
   </script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@400;600;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Outfit:wght@300;400;600;700;900&display=swap');
     
+    body { scroll-behavior: smooth; }
     .font-arabic { font-family: 'Cairo', sans-serif; }
     .font-english { font-family: 'Outfit', sans-serif; }
     
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    html { scroll-behavior: smooth; }
-
-    /* Glassmorphism */
-    .glass {
-      background: rgba(17, 24, 39, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    /* تأثيرات الزجاج المتطورة */
+    .glass-dark {
+      background: rgba(8, 15, 30, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
     
+    .glass-light {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .clip-path-slant {
+      clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+    }
+
+    /* إعدادات الطباعة للكشف */
     @media print {
       @page { size: A4 portrait; margin: 0; }
       body { background: white !important; color: black !important; }
@@ -77,7 +92,7 @@
     }
   </script>
 </head>
-<body class="bg-gray-900 text-white font-arabic overflow-x-hidden">
+<body class="bg-gray-50 text-gray-900 dark:bg-[#060B14] dark:text-white font-arabic overflow-x-hidden transition-colors duration-500">
   
   <div id="root"></div>
 
@@ -85,9 +100,9 @@
     import React, { useState, useEffect, useRef } from 'react';
     import { createRoot } from 'react-dom/client';
     import { QRCodeSVG } from 'qrcode.react';
-    import { Moon, Sun, Globe, Phone, MapPin, Menu, X, Plus, Trash2, CheckCircle, Car, Users, Star, MessageCircle, FileText, ArrowRight, User, ShieldCheck, Clock, PlayCircle } from 'lucide-react';
+    import { Moon, Sun, Globe, Phone, MapPin, Menu, X, Plus, Trash2, CheckCircle, Car, Users, Star, MessageCircle, FileText, ArrowRight, User, ShieldCheck, Clock, Award, ChevronDown } from 'lucide-react';
 
-    // --- رابط سكريبت جوجل الخاص بك ---
+    // الرابط السري الخاص بجوجل سكريبت
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMt_PgL02L9D_J_E4dQ-IJ-dlxNT7ZfJzKS2JKBW0WrXXzPTgJF5ldzOaekHy6JlCcdA/exec";
 
     // دالة الاتصال بالخادم
@@ -105,7 +120,7 @@
       }
     };
 
-    // --- مكون الأنيميشن الذكي (بديل Framer Motion) ---
+    // مكون حركة الدخول الانسيابية
     function FadeInWhenVisible({ children, delay = 0, className = "" }) {
       const [isVisible, setIsVisible] = useState(false);
       const domRef = useRef();
@@ -127,7 +142,7 @@
       return (
         <div
           ref={domRef}
-          className={`transition-all duration-1000 ease-out ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'} ${className}`}
+          className={`transition-all duration-1000 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'} ${className}`}
           style={{ transitionDelay: `${delay}ms` }}
         >
           {children}
@@ -139,43 +154,34 @@
     const dict = {
       ar: {
         title: 'المسار الآمن للنقل والرحلات', home: 'الرئيسية', fleet: 'أسطولنا', book: 'احجز رحلتك',
-        driverLogin: 'بوابة السائقين', heroTitle: 'رحلتك الفاخرة تبدأ من هنا',
-        heroSub: 'أسطول من أحدث سيارات الدفع الرباعي والفانات العائلية باللون الأسود الملكي لضمان راحة وسلامة عائلتك.',
-        bookNow: 'احجز الآن', ourFleet: 'أسطول سياراتنا الفاخرة', fleetSub: 'سيارات حديثة ومجهزة بأعلى معايير الراحة والأمان',
-        passenger: 'راكب', passengers: 'ركاب', addPassenger: 'إضافة مرافق',
-        customerName: 'اسم العميل الأساسي', mobile: 'رقم الجوال', passport: 'رقم الهوية / الجواز',
-        nationality: 'الجنسية', sendBooking: 'تأكيد الحجز', bookingSuccess: 'تم إرسال حجزك بنجاح! سنتواصل معك قريباً.',
-        loginTitle: 'تسجيل دخول السائقين', username: 'اسم المستخدم', password: 'كلمة المرور', login: 'تسجيل الدخول',
-        manifestTitle: 'إنشاء كشف ركاب جديد', driverName: 'اسم السائق', driverId: 'هوية السائق',
+        driverLogin: 'بوابة السائقين', heroTitle: 'ارتقِ بتجربة سفرك نحو الفخامة',
+        heroSub: 'أسطول من أحدث سيارات الـ SUV والفانات العائلية باللون الأسود الملكي. نضمن لك ولعائلتك رحلة آمنة، مريحة، ولا تُنسى.',
+        bookNow: 'اكتشف الرحلة', ourFleet: 'أسطول النخبة', fleetSub: 'سيارات فاخرة مجهزة بأعلى معايير الراحة والأمان العالمي',
+        passenger: 'مرافق', passengers: 'المرافقين', addPassenger: 'إضافة مرافق',
+        customerName: 'الاسم الكامل للعميل', mobile: 'رقم الجوال', passport: 'رقم الهوية / الجواز',
+        nationality: 'الجنسية', sendBooking: 'تأكيد الحجز الفاخر', bookingSuccess: 'تم استلام حجزك بنجاح! سيقوم فريقنا بالتواصل معك فوراً.',
+        loginTitle: 'بوابة السائقين المعتمدين', username: 'اسم المستخدم', password: 'كلمة المرور', login: 'تسجيل الدخول',
+        manifestTitle: 'إصدار كشف ركاب إلكتروني', driverName: 'اسم السائق', driverId: 'رقم الهوية',
         carPlate: 'رقم اللوحة', carColor: 'لون السيارة', carType: 'نوع السيارة',
         from: 'جهة القدوم', to: 'جهة الوصول', flightNum: 'رقم الرحلة', date: 'التاريخ', day: 'اليوم',
-        generateManifest: 'حفظ وإصدار الكشف (PDF)', printManifest: 'طباعة الكشف', testimonials: 'تجارب عملائنا',
-        footerDesc: 'الخيار الأول للنقل المتخصص والرحلات في المملكة العربية السعودية.', address: 'العنوان', addressText: 'مكة المكرمة - العزيزية - بجوار مول العائلة',
-        contact: 'تواصل معنا', saudi: 'سعودي', egyptian: 'مصري', other: 'أخرى', featuresTitle: 'لماذا تختار المسار الآمن؟'
-      },
-      en: {
-        title: 'Safe Path Transport', home: 'Home', fleet: 'Our Fleet', book: 'Book a Trip',
-        driverLogin: 'Driver Portal', heroTitle: 'Your Luxury Journey Starts Here',
-        heroSub: 'A fleet of the latest SUVs and family vans ensuring your family\'s comfort and safety.',
-        bookNow: 'Book Now', ourFleet: 'Our Luxury Fleet', fleetSub: 'Modern cars equipped with the highest standards of comfort and safety',
-        passenger: 'Passenger', passengers: 'Passengers', addPassenger: 'Add Passenger',
-        customerName: 'Main Customer Name', mobile: 'Mobile Number', passport: 'ID / Passport Number',
-        nationality: 'Nationality', sendBooking: 'Confirm Booking', bookingSuccess: 'Booking sent successfully! We will contact you soon.',
-        loginTitle: 'Driver Login', username: 'Username', password: 'Password', login: 'Login',
-        manifestTitle: 'Create New Manifest', driverName: 'Driver Name', driverId: 'Driver ID',
-        carPlate: 'Plate Number', carColor: 'Car Color', carType: 'Car Type',
-        from: 'From', to: 'To', flightNum: 'Flight Number', date: 'Date', day: 'Day',
-        generateManifest: 'Save & Generate Manifest (PDF)', printManifest: 'Print Manifest', testimonials: 'Client Experiences',
-        footerDesc: 'The first choice for specialized transport and trips in Saudi Arabia.', address: 'Address', addressText: 'Makkah - Al Aziziya - Next to Family Mall',
-        contact: 'Contact Us', saudi: 'Saudi', egyptian: 'Egyptian', other: 'Other', featuresTitle: 'Why Choose Safe Path?'
+        generateManifest: 'اعتماد وإصدار الكشف (PDF)', printManifest: 'طباعة الكشف', testimonials: 'آراء شركاء النجاح',
+        footerDesc: 'الخيار الأول للنقل المتخصص والرحلات الفاخرة في المملكة العربية السعودية.', address: 'العنوان', addressText: 'مكة المكرمة - العزيزية - بجوار مول العائلة',
+        contact: 'خدمة العملاء', saudi: 'سعودي', egyptian: 'مصري', other: 'أخرى', featuresTitle: 'لماذا المسار الآمن؟'
       }
     };
 
+    // تم تغيير الصور لسيارات حقيقية فخمة (سوداء/كحلي داكن)
     const cars = [
-      { id: 1, name: 'هيونداي ستاريا (7 مقاعد)', descAr: 'فخامة واتساع لا مثيل له، تصميم مستقبلي يوفر راحة قصوى. (أسود ملكي)', descEn: 'Unmatched luxury and spaciousness. (Royal Black)', img: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80' },
-      { id: 2, name: 'جي إم سي يوكون (GMC)', descAr: 'هيبة الحضور وقوة الأداء، الخيار الأمثل للعائلات الباحثة عن الرفاهية. (أسود)', descEn: 'Commanding presence and powerful performance. (Black)', img: 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=1200&q=80' },
-      { id: 3, name: 'فورد تورنيو كاستم', descAr: 'مرونة عالية ومساحة تخزين ضخمة، مصممة خصيصاً لرحلات المطار. (كحلي داكن)', descEn: 'High flexibility and massive cargo space. (Dark Navy)', img: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=1200&q=80' },
-      { id: 4, name: 'هيونداي ستاريا (9 مقاعد)', descAr: 'النسخة الأكبر للعائلات الممتدة، رحابة داخلية مذهلة للرحلات الطويلة. (فضي غامق)', descEn: 'The larger version for extended families. (Dark Silver)', img: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80' },
+      { id: 1, name: 'هيونداي ستاريا (7 مقاعد)', descAr: 'فخامة واتساع لا مثيل له، مقاعد مريحة كدرجة رجال الأعمال. (أسود ملكي)', img: 'https://www.hyundai.com/content/dam/hyundai/template_en/en/images/find-a-car/pip/staria/highlights/staria-us4-highlights-premium-pc.jpg' },
+      { id: 2, name: 'جي إم سي يوكون (GMC)', descAr: 'هيبة الحضور وقوة الأداء، الخيار الأمثل للعائلات الباحثة عن الرفاهية والأمان. (أسود لامع)', img: 'https://media.drive.com.au/obj/tx_q:50,rs:auto:1920:1080:1/driveau/upload/cms/uploads/kkqagsuh1ivsekrobyyn' },
+      { id: 3, name: 'فورد تورنيو كاستم', descAr: 'مرونة عالية ومساحة تخزين ضخمة، مصممة خصيصاً لرحلات المطار الطويلة. (كحلي داكن)', img: 'https://www.gmc.com/content/dam/gmc/na/us/english/index/vehicles/2026/suvs/yukon/overview/capability/v2/my26-yukon-mov-capability-adaptive-suspension-1280x720-26PGYK100928.jpg?imwidth=1920' },
+      { id: 4, name: 'هيونداي ستاريا (9 مقاعد)', descAr: 'النسخة الأكبر للعائلات الممتدة، رحابة داخلية مذهلة للرحلات الطويلة. (رمادي داكن)', img: 'https://parkers-images.bauersecure.com/wp-images/245473/082-ford-tourneo-custom-front-static.jpg' },
+    ];
+
+    const features = [
+      { icon: <ShieldCheck size={36} />, titleAr: 'أمان لا يساوم', descAr: 'أسطولنا مجهز بأحدث أنظمة السلامة الذكية لحمايتك في كل ميل.' },
+      { icon: <Clock size={36} />, titleAr: 'دقة المواعيد', descAr: 'نقدر وقتك. سائقونا متواجدون قبل الموعد المحدد لضمان انطلاقك بسلاسة.' },
+      { icon: <Award size={36} />, titleAr: 'خدمة كبار الشخصيات', descAr: 'تجربة سفر متكاملة تبدأ من لحظة استقبالك وحتى وصولك لوجهتك.' },
     ];
 
     const reviews = [
@@ -183,25 +189,17 @@
       { id: 2, name: 'سارة خالد', rating: 5, text: 'رحلتنا من جدة لمكة كانت ممتازة. سيارة GMC واسعة وتكفي العائلة كلها مع الشنط الكبيرة براحة.' },
       { id: 3, name: 'محمد عبدالسلام', rating: 5, text: 'خدمة عملاء سريعة الرد وحجز سهل. تجربة السفر في الفورد تورنيو كانت مريحة جداً.' },
       { id: 4, name: 'فهد العتيبي', rating: 5, text: 'السائق محترم جداً والقيادة آمنة. أفضل شركة تعاملت معاها لنقل المطار.' },
-      { id: 5, name: 'ياسر علي', rating: 5, text: 'ترتيبات دقيقة جداً. السيارات فخمة ونظيفة، أوصي بهم بشدة لأي عائلة.' },
     ];
 
-    const features = [
-      { icon: <ShieldCheck size={32} />, titleAr: 'أمان تام', titleEn: 'Total Safety', descAr: 'سياراتنا مجهزة بأحدث أنظمة الأمان والسلامة.', descEn: 'Our cars are equipped with the latest safety systems.' },
-      { icon: <Clock size={32} />, titleAr: 'دقة في المواعيد', titleEn: 'Punctuality', descAr: 'نلتزم بالمواعيد المحددة بدقة لضمان راحتكم.', descEn: 'We adhere to scheduled times precisely.' },
-      { icon: <Star size={32} />, titleAr: 'رفاهية مطلقة', titleEn: 'Absolute Luxury', descAr: 'سيارات فاخرة تضمن لك ولعائلتك رحلة لا تنسى.', descEn: 'Luxury cars ensuring an unforgettable trip.' },
-    ];
-
-    // --- STREAMING_CHUNK:Main App Structure ---
+    // --- STREAMING_CHUNK: Main App ---
     function App() {
+      // Default to dark mode for a luxury feel
       const [theme, setTheme] = useState('dark');
-      const [lang, setLang] = useState('ar');
       const [currentPage, setCurrentPage] = useState('home');
       const [user, setUser] = useState(null);
       const [viewedManifestData, setViewedManifestData] = useState(null);
 
-      const t = dict[lang];
-      const isRTL = lang === 'ar';
+      const t = dict['ar']; // Forced Arabic as per requirement
 
       useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -210,14 +208,16 @@
       }, []);
 
       useEffect(() => {
-        document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-        document.documentElement.classList.toggle('light', theme === 'light');
-        document.body.className = theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900';
-      }, [theme, lang, isRTL]);
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        }
+      }, [theme]);
 
-      const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
-      const toggleLang = () => setLang(lang === 'ar' ? 'en' : 'ar');
+      const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
       const fetchManifest = async (id) => {
         const res = await apiCall('getManifest', { manifestId: id });
@@ -238,13 +238,13 @@
       };
 
       return (
-        <div className={`min-h-screen font-sans ${isRTL ? 'font-arabic' : 'font-english'}`}>
+        <div className={`min-h-screen font-arabic selection:bg-brand-500 selection:text-white`}>
           <div className="print:hidden">
-            <Navbar t={t} lang={lang} theme={theme} toggleTheme={toggleTheme} toggleLang={toggleLang} navTo={navTo} currentPage={currentPage} />
+            <Navbar t={t} theme={theme} toggleTheme={toggleTheme} navTo={navTo} currentPage={currentPage} />
           </div>
 
           <main className="print:p-0 print:m-0">
-            {currentPage === 'home' && <Home t={t} isRTL={isRTL} lang={lang} navTo={navTo} />}
+            {currentPage === 'home' && <Home t={t} navTo={navTo} theme={theme} />}
             {currentPage === 'driver-login' && <DriverLogin t={t} onLogin={(driverName) => { setUser({ name: driverName }); navTo('driver-dashboard'); }} />}
             {currentPage === 'driver-dashboard' && <DriverDashboard t={t} user={user} onManifestCreated={(data) => {
               setViewedManifestData(data);
@@ -263,109 +263,149 @@
       );
     }
 
-    // --- STREAMING_CHUNK:Navbar Component ---
-    function Navbar({ t, theme, toggleTheme, toggleLang, navTo, currentPage }) {
+    // --- STREAMING_CHUNK: Navbar ---
+    function Navbar({ t, theme, toggleTheme, navTo, currentPage }) {
       const [isOpen, setIsOpen] = useState(false);
-      const scrollToSection = (id) => { navTo('home'); setTimeout(() => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); };
+      const [scrolled, setScrolled] = useState(false);
+
+      useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      const scrollToSection = (id) => { 
+        navTo('home'); 
+        setTimeout(() => { 
+          const el = document.getElementById(id); 
+          if (el) el.scrollIntoView({ behavior: 'smooth' }); 
+        }, 100); 
+      };
+
+      const glassClass = theme === 'dark' ? 'glass-dark' : 'glass-light';
+      const navClass = `fixed w-full z-50 transition-all duration-500 ${scrolled ? glassClass + ' py-2' : 'bg-transparent py-4'}`;
 
       return (
-        <nav className={`fixed w-full z-50 transition-all duration-300 glass`}>
-          <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+        <nav className={navClass}>
+          <div className="container mx-auto px-6 flex justify-between items-center">
+            {/* Logo */}
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navTo('home')}>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-brand-500/30 group-hover:rotate-12 transition-transform duration-300">
                 M
               </div>
-              <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-white">{t.title}</span>
+              <span className={`font-black text-2xl tracking-tight transition-colors ${scrolled || theme === 'light' ? 'text-gray-900 dark:text-white' : 'text-white'}`}>
+                المسار <span className="text-brand-500">الآمن</span>
+              </span>
             </div>
 
+            {/* Desktop Links */}
             <div className="hidden md:flex items-center gap-8">
-              <button onClick={() => navTo('home')} className={`font-semibold hover:text-blue-400 transition-colors ${currentPage === 'home' ? 'text-blue-400' : 'text-gray-200'}`}>{t.home}</button>
-              <button onClick={() => scrollToSection('fleet')} className="font-semibold text-gray-200 hover:text-blue-400 transition-colors">{t.fleet}</button>
-              <button onClick={() => scrollToSection('book')} className="font-semibold text-gray-200 hover:text-blue-400 transition-colors">{t.book}</button>
-              <button onClick={() => navTo('driver-login')} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] text-sm font-bold flex items-center gap-2">
-                <Car size={18} /> {t.driverLogin}
-              </button>
-              <div className="flex items-center gap-2 border-l-2 pl-4 border-gray-600">
-                <button onClick={toggleLang} className="p-2 rounded-full text-gray-200 hover:bg-gray-800 transition flex items-center gap-1"><Globe size={20} /> <span className="text-sm uppercase font-bold">{t.saudi === 'سعودي' ? 'EN' : 'AR'}</span></button>
+              <button onClick={() => navTo('home')} className={`font-bold hover:text-brand-500 transition-colors ${currentPage === 'home' ? 'text-brand-500' : (scrolled || theme==='light' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-100')}`}>{t.home}</button>
+              <button onClick={() => scrollToSection('fleet')} className={`font-bold hover:text-brand-500 transition-colors ${(scrolled || theme==='light') ? 'text-gray-700 dark:text-gray-300' : 'text-gray-100'}`}>{t.fleet}</button>
+              <button onClick={() => scrollToSection('book')} className={`font-bold hover:text-brand-500 transition-colors ${(scrolled || theme==='light') ? 'text-gray-700 dark:text-gray-300' : 'text-gray-100'}`}>{t.book}</button>
+              
+              <div className="flex items-center gap-4 border-r border-gray-300 dark:border-gray-700 pr-4">
+                {/* THEME TOGGLE BUTTON - FIXED */}
+                <button 
+                  onClick={toggleTheme} 
+                  className={`p-2.5 rounded-full backdrop-blur-md transition-all hover:scale-110 ${scrolled || theme==='light' ? 'bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-yellow-400' : 'bg-white/10 text-yellow-400 hover:bg-white/20'}`}
+                  title="تغيير المظهر"
+                >
+                  {theme === 'dark' ? <Sun size={20} className="animate-spin-slow" /> : <Moon size={20} />}
+                </button>
+
+                <button onClick={() => navTo('driver-login')} className="px-6 py-2.5 rounded-full bg-brand-600 hover:bg-brand-500 text-white transition-all shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_25px_rgba(14,165,233,0.6)] hover:-translate-y-1 font-bold flex items-center gap-2">
+                  <Car size={18} /> {t.driverLogin}
+                </button>
               </div>
             </div>
 
-            <div className="md:hidden flex items-center gap-3">
-              <button onClick={toggleLang} className="p-2 font-bold uppercase text-gray-200">{t.saudi === 'سعودي' ? 'EN' : 'AR'}</button>
-              <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-gray-200">{isOpen ? <X size={24} /> : <Menu size={24} />}</button>
+            {/* Mobile Toggle */}
+            <div className="md:hidden flex items-center gap-4">
+              <button onClick={toggleTheme} className={`p-2 rounded-full ${scrolled || theme==='light' ? 'text-gray-800 dark:text-yellow-400' : 'text-yellow-400'}`}>
+                {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+              </button>
+              <button onClick={() => setIsOpen(!isOpen)} className={scrolled || theme==='light' ? 'text-gray-900 dark:text-white' : 'text-white'}>
+                {isOpen ? <X size={28} /> : <Menu size={28} />}
+              </button>
             </div>
           </div>
+
+          {/* Mobile Menu */}
           {isOpen && (
-            <div className={`md:hidden px-4 py-4 space-y-4 glass border-t border-gray-700`}>
-               <button onClick={() => { navTo('home'); setIsOpen(false); }} className="block w-full text-start font-semibold text-gray-200">{t.home}</button>
-               <button onClick={() => { scrollToSection('fleet'); setIsOpen(false); }} className="block w-full text-start font-semibold text-gray-200">{t.fleet}</button>
-               <button onClick={() => { scrollToSection('book'); setIsOpen(false); }} className="block w-full text-start font-semibold text-gray-200">{t.book}</button>
-               <button onClick={() => { navTo('driver-login'); setIsOpen(false); }} className="block w-full text-start text-blue-400 font-bold">{t.driverLogin}</button>
+            <div className={`md:hidden px-6 py-6 space-y-5 border-t mt-4 shadow-2xl ${theme === 'dark' ? 'bg-[#0B1120] border-gray-800' : 'bg-white border-gray-200'}`}>
+               <button onClick={() => { navTo('home'); setIsOpen(false); }} className="block w-full text-start font-bold text-lg">{t.home}</button>
+               <button onClick={() => { scrollToSection('fleet'); setIsOpen(false); }} className="block w-full text-start font-bold text-lg">{t.fleet}</button>
+               <button onClick={() => { scrollToSection('book'); setIsOpen(false); }} className="block w-full text-start font-bold text-lg">{t.book}</button>
+               <button onClick={() => { navTo('driver-login'); setIsOpen(false); }} className="block w-full text-start text-brand-500 font-bold text-lg pt-4 border-t border-gray-200 dark:border-gray-800">{t.driverLogin}</button>
             </div>
           )}
         </nav>
       );
     }
 
-    // --- STREAMING_CHUNK:Home & Content Components ---
-    function Home({ t, isRTL, lang, navTo }) {
+    // --- STREAMING_CHUNK: Home Content ---
+    function Home({ t, navTo, theme }) {
       const scrollToBook = () => { const el = document.getElementById('book'); if (el) el.scrollIntoView({ behavior: 'smooth' }); };
       
       return (
         <div className="flex flex-col">
-          {/* Hero Section with Video Background */}
-          <section className="relative h-screen flex items-center justify-center overflow-hidden">
+          {/* Hero Section */}
+          <section className="relative h-screen flex items-center justify-center overflow-hidden clip-path-slant pb-20">
             <div className="absolute inset-0 z-0 bg-black">
-               {/* فيديو فاخر كخلفية - يعمل تلقائياً وبصمت */}
-               <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-50 scale-105">
-                  <source src="https://player.vimeo.com/external/498701986.sd.mp4?s=d460e6e7d697841cd3e6d1c7f1a30f30c6aeb98c&profile_id=164&oauth2_token_id=57447761" type="video/mp4" />
+               {/* فيديو قيادة سيارة في مدينة ليلية - يعطي طابع فخم وحيوي */}
+               <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 animate-ken-burns">
+                  <source src="video.mp4" type="video/mp4" />
                </video>
-              <div className="absolute inset-0 bg-gradient-to-b from-gray-900/90 via-gray-900/50 to-gray-900"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-[#060B14]/80 via-[#060B14]/40 to-[#060B14]"></div>
             </div>
             
-            <div className="relative z-10 text-center px-4 max-w-5xl mx-auto mt-20">
+            <div className="relative z-10 text-center px-4 max-w-5xl mx-auto mt-24">
               <div className="animate-fade-in">
-                <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white drop-shadow-2xl leading-tight">
+                <div className="inline-block px-4 py-1.5 rounded-full border border-brand-500/30 bg-brand-500/10 backdrop-blur-sm text-brand-400 font-bold text-sm mb-6 animate-pulse">
+                   الخيار الأول لكبار الشخصيات
+                </div>
+                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 text-white drop-shadow-2xl leading-[1.2]">
                   {t.heroTitle}
                 </h1>
-                <p className="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto font-light leading-relaxed">
+                <p className="text-lg md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto font-medium leading-relaxed opacity-90">
                   {t.heroSub}
                 </p>
-                <button 
-                  onClick={scrollToBook} 
-                  className="inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-full text-xl font-bold transition-all shadow-[0_0_40px_rgba(37,99,235,0.4)] hover:shadow-[0_0_60px_rgba(37,99,235,0.6)] hover:-translate-y-1"
-                >
-                  {t.bookNow} <ArrowRight size={24} className={isRTL ? 'rotate-180' : ''} />
-                </button>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                  <button onClick={scrollToBook} className="w-full sm:w-auto inline-flex justify-center items-center gap-3 bg-brand-600 hover:bg-brand-500 text-white px-10 py-5 rounded-full text-xl font-bold transition-all shadow-[0_0_30px_rgba(14,165,233,0.5)] hover:shadow-[0_0_50px_rgba(14,165,233,0.8)] hover:-translate-y-1">
+                    {t.bookNow} <ArrowRight size={24} />
+                  </button>
+                  <button onClick={() => { const el = document.getElementById('fleet'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="w-full sm:w-auto inline-flex justify-center items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-10 py-5 rounded-full text-xl font-bold transition-all hover:-translate-y-1">
+                    استكشف الأسطول
+                  </button>
+                </div>
               </div>
             </div>
             
-            {/* Scroll Indicator */}
-            <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-white/50 animate-bounce">
-               <div className="w-6 h-10 border-2 border-current rounded-full flex justify-center pt-2">
-                  <div className="w-1 h-2 bg-current rounded-full"></div>
-               </div>
+            <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 text-white/50 animate-bounce cursor-pointer" onClick={() => { const el = document.getElementById('features'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}>
+               <ChevronDown size={40} className="opacity-70 hover:opacity-100 transition-opacity text-brand-400" />
             </div>
           </section>
 
           {/* Features Section */}
-          <section className="py-24 bg-gray-900 relative">
-             <div className="container mx-auto px-4 relative z-10">
+          <section id="features" className="py-24 relative -mt-10">
+             <div className="container mx-auto px-6 relative z-10">
                 <FadeInWhenVisible>
                   <div className="text-center mb-16">
-                     <h2 className="text-3xl font-bold text-white">{t.featuresTitle}</h2>
-                     <div className="w-20 h-1 bg-blue-500 mx-auto mt-4 rounded-full"></div>
+                     <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">{t.featuresTitle}</h2>
+                     <div className="w-24 h-1.5 bg-gradient-to-r from-brand-600 to-brand-400 mx-auto mt-6 rounded-full"></div>
                   </div>
                 </FadeInWhenVisible>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl mx-auto">
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                    {features.map((f, i) => (
                       <FadeInWhenVisible key={i} delay={i * 200}>
-                         <div className="text-center p-8 rounded-3xl bg-gray-800 shadow-2xl border border-gray-700 hover:-translate-y-2 transition-transform duration-500 hover:shadow-blue-900/20">
-                            <div className="w-20 h-20 mx-auto bg-blue-900/30 text-blue-400 rounded-2xl flex items-center justify-center mb-6">
+                         <div className="text-center p-10 rounded-[2.5rem] bg-white dark:bg-[#0B1120] shadow-xl dark:shadow-2xl border border-gray-100 dark:border-gray-800 hover:-translate-y-3 transition-all duration-500 group">
+                            <div className="w-24 h-24 mx-auto bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300 shadow-inner">
                                {f.icon}
                             </div>
-                            <h3 className="text-2xl font-bold mb-4 text-white">{lang === 'ar' ? f.titleAr : f.titleEn}</h3>
-                            <p className="text-gray-400 leading-relaxed text-lg">{lang === 'ar' ? f.descAr : f.descEn}</p>
+                            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{f.titleAr}</h3>
+                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">{f.descAr}</p>
                          </div>
                       </FadeInWhenVisible>
                    ))}
@@ -374,34 +414,38 @@
           </section>
 
           {/* Fleet Section */}
-          <section id="fleet" className="py-24 bg-gray-800 border-t border-gray-700">
-            <div className="container mx-auto px-4">
+          <section id="fleet" className="py-24 bg-gray-50 dark:bg-[#080D18]">
+            <div className="container mx-auto px-6">
               <FadeInWhenVisible>
-                <div className="text-center mb-16">
-                  <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">{t.ourFleet}</h2>
-                  <p className="text-xl text-gray-400">{t.fleetSub}</p>
+                <div className="text-center mb-20">
+                  <h2 className="text-4xl md:text-5xl font-black mb-6 text-gray-900 dark:text-white">{t.ourFleet}</h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">{t.fleetSub}</p>
                 </div>
               </FadeInWhenVisible>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl mx-auto">
                 {cars.map((car, i) => (
-                   <FadeInWhenVisible key={car.id} delay={i * 200}>
-                    <div className="group relative bg-gray-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-700 h-[450px]">
+                   <FadeInWhenVisible key={car.id} delay={i * 150}>
+                    <div className="group relative bg-black rounded-[2.5rem] overflow-hidden shadow-2xl h-[500px] cursor-pointer">
+                      {/* Image with zoom effect */}
                       <div className="absolute inset-0">
-                        <img src={car.img} alt={car.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-80 group-hover:opacity-100" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90 group-hover:opacity-80 transition-opacity"></div>
+                        <img src={car.img} alt={car.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-70 group-hover:opacity-100" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#060B14] via-[#060B14]/40 to-transparent opacity-90 group-hover:opacity-70 transition-opacity duration-500"></div>
                       </div>
                       
-                      <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm font-bold flex items-center gap-2 border border-white/10">
-                        <Users size={16} className="text-blue-400" /> {car.name.includes('9') ? '9' : '7'} {t.passengers}
+                      {/* Passenger Badge */}
+                      <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-md px-5 py-2.5 rounded-full text-white text-sm font-bold flex items-center gap-2 border border-white/20 shadow-lg">
+                        <Users size={18} className="text-brand-400" /> {car.name.includes('9') ? '9' : '7'} {t.passengers}
                       </div>
 
-                      <div className="absolute bottom-0 left-0 w-full p-8 transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500">
-                        <h3 className="text-3xl font-bold mb-3 text-white flex items-center gap-3">
+                      {/* Content Reveal */}
+                      <div className="absolute bottom-0 left-0 w-full p-8 md:p-10 transform translate-y-10 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                        <div className="w-12 h-1 bg-brand-500 mb-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100"></div>
+                        <h3 className="text-3xl md:text-4xl font-bold mb-4 text-white drop-shadow-lg">
                            {car.name}
                         </h3>
-                        <p className="text-gray-300 leading-relaxed text-lg opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">
-                           {lang === 'ar' ? car.descAr : car.descEn}
+                        <p className="text-gray-300 leading-relaxed text-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
+                           {car.descAr}
                         </p>
                       </div>
                     </div>
@@ -412,50 +456,52 @@
           </section>
 
           {/* Booking Form Section */}
-          <section id="book" className="py-24 bg-gray-900 relative overflow-hidden">
-             {/* Background glow effects */}
-             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none"></div>
-             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-600/10 rounded-full blur-[100px] -ml-40 -mb-40 pointer-events-none"></div>
+          <section id="book" className="py-24 relative overflow-hidden">
+             {/* Glow Backgrounds */}
+             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-600/10 rounded-full blur-[120px] -mr-40 -mt-40 pointer-events-none"></div>
              
-             <div className="container mx-auto px-4 max-w-4xl relative z-10">
+             <div className="container mx-auto px-6 max-w-5xl relative z-10">
                <FadeInWhenVisible>
-                 <div className="bg-gray-800 rounded-[2.5rem] shadow-2xl p-8 md:p-12 border border-gray-700">
-                   <div className="text-center mb-10">
-                     <h2 className="text-4xl font-bold mb-4 text-white">{t.book}</h2>
-                     <p className="text-gray-400 text-lg">يرجى تعبئة البيانات لتأكيد رحلتك معنا</p>
+                 <div className="bg-white dark:bg-[#0B1120] rounded-[3rem] shadow-2xl p-8 md:p-14 border border-gray-100 dark:border-gray-800 relative overflow-hidden">
+                   {/* Decoration */}
+                   <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-600 to-brand-400"></div>
+                   
+                   <div className="text-center mb-12">
+                     <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 dark:text-white">{t.book}</h2>
+                     <p className="text-gray-500 dark:text-gray-400 text-lg">أدخل بياناتك وسنتولى نحن كافة الترتيبات لضمان راحتك</p>
                    </div>
-                   <BookingForm t={t} />
+                   <BookingForm t={t} theme={theme} />
                  </div>
                </FadeInWhenVisible>
              </div>
           </section>
 
           {/* Testimonials */}
-          <section className="py-24 bg-gray-800 border-t border-gray-700">
-            <div className="container mx-auto px-4 overflow-hidden">
+          <section className="py-24 bg-gray-100 dark:bg-[#060B14]">
+            <div className="container mx-auto px-6 overflow-hidden max-w-7xl">
               <FadeInWhenVisible>
                 <div className="text-center mb-16">
-                   <h2 className="text-4xl font-bold mb-4 text-white">{t.testimonials}</h2>
-                   <div className="w-20 h-1 bg-blue-500 mx-auto rounded-full"></div>
+                   <h2 className="text-4xl md:text-5xl font-black mb-6 text-gray-900 dark:text-white">{t.testimonials}</h2>
+                   <div className="w-24 h-1.5 bg-gradient-to-r from-brand-600 to-brand-400 mx-auto rounded-full"></div>
                 </div>
               </FadeInWhenVisible>
               
-              <div className="flex overflow-x-auto pb-12 gap-8 snap-x hide-scrollbar px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {reviews.map((review, i) => (
-                  <FadeInWhenVisible key={review.id} delay={i * 150} className="min-w-[320px] md:min-w-[400px] snap-center">
-                    <div className="bg-gray-900 p-8 rounded-3xl shadow-xl border border-gray-700 h-full relative group hover:border-blue-500/50 transition-colors">
-                      <div className="absolute -top-4 right-8 text-6xl text-gray-700 font-serif group-hover:text-blue-900/30 transition-colors">"</div>
-                      <div className="flex items-center gap-1 mb-6 text-yellow-400">
-                        {[...Array(review.rating)].map((_, i) => <Star key={i} size={18} fill="currentColor" />)}
+                  <FadeInWhenVisible key={review.id} delay={i * 150}>
+                    <div className="bg-white dark:bg-[#0B1120] p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-800 h-full relative group hover:border-brand-500/50 transition-all duration-300 hover:-translate-y-2">
+                      <div className="absolute -top-6 right-8 text-7xl text-brand-100 dark:text-brand-900/30 font-serif">"</div>
+                      <div className="flex items-center gap-1 mb-6 text-gold-400">
+                        {[...Array(review.rating)].map((_, idx) => <Star key={idx} size={20} fill="currentColor" />)}
                       </div>
-                      <p className="text-gray-300 text-lg leading-relaxed mb-8 relative z-10">
+                      <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-8 relative z-10 font-medium">
                          {review.text}
                       </p>
-                      <div className="flex items-center gap-4 mt-auto border-t border-gray-800 pt-6">
-                         <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 to-teal-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                      <div className="flex items-center gap-4 mt-auto pt-6 border-t border-gray-100 dark:border-gray-800">
+                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
                             {review.name.charAt(0)}
                          </div>
-                         <p className="font-bold text-white text-lg">{review.name}</p>
+                         <p className="font-bold text-gray-900 dark:text-white text-xl">{review.name}</p>
                       </div>
                     </div>
                   </FadeInWhenVisible>
@@ -467,8 +513,8 @@
       );
     }
 
-    // --- STREAMING_CHUNK:Booking Form Logic ---
-    function BookingForm({ t }) {
+    // --- STREAMING_CHUNK: Booking Form Logic ---
+    function BookingForm({ t, theme }) {
       const [status, setStatus] = useState('idle');
       const [formData, setFormData] = useState({ mainName: '', mobile: '', passengers: [{ name: '', passport: '', nationality: 'saudi' }] });
 
@@ -494,64 +540,67 @@
 
       if (status === 'success') {
         return (
-           <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
-             <div className="w-24 h-24 bg-green-900/30 rounded-full flex items-center justify-center mb-6 border border-green-500/30">
-               <CheckCircle size={48} className="text-green-400" />
+           <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+             <div className="w-32 h-32 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-8 border-4 border-green-500/30">
+               <CheckCircle size={64} className="text-green-500" />
              </div>
-             <h3 className="text-3xl font-bold text-green-400 mb-4">{t.bookingSuccess}</h3>
-             <p className="text-gray-400 text-lg">سيتواصل معك فريقنا في أقرب وقت لتأكيد التفاصيل.</p>
+             <h3 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400 mb-4">{t.bookingSuccess}</h3>
+             <p className="text-gray-600 dark:text-gray-400 text-xl">سيتواصل معك فريق الحجوزات قريباً لترتيب أدق التفاصيل.</p>
            </div>
         );
       }
 
+      const inputClass = "w-full p-4 md:p-5 text-lg rounded-2xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20 outline-none transition-all text-gray-900 dark:text-white font-medium";
+      const labelClass = "block text-sm font-bold mb-3 text-gray-700 dark:text-gray-300";
+
       return (
         <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-8">
             <div>
-               <label className="block text-sm font-bold mb-2 text-gray-300">{t.customerName}</label>
-               <input required type="text" value={formData.mainName} onChange={e => setFormData({...formData, mainName: e.target.value})} className="w-full p-4 text-lg rounded-xl bg-gray-900 border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-white" placeholder="الاسم الكامل" />
+               <label className={labelClass}>{t.customerName}</label>
+               <input required type="text" value={formData.mainName} onChange={e => setFormData({...formData, mainName: e.target.value})} className={inputClass} placeholder="الاسم الكامل" />
             </div>
             <div>
-               <label className="block text-sm font-bold mb-2 text-gray-300">{t.mobile}</label>
-               <input required type="tel" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} className="w-full p-4 text-lg rounded-xl bg-gray-900 border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-white" placeholder="05XXXXXXXX" dir="ltr" />
+               <label className={labelClass}>{t.mobile}</label>
+               <input required type="tel" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} className={inputClass} placeholder="05XXXXXXXX" dir="ltr" />
             </div>
           </div>
           
-          <div className="bg-gray-900/50 p-6 md:p-8 rounded-2xl border border-gray-700 shadow-inner">
-            <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
-               <h4 className="font-bold text-xl flex items-center gap-3 text-white"><Users size={24} className="text-blue-500"/> {t.passengers}</h4>
-               <button type="button" onClick={addPassenger} className="text-sm bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 px-5 py-2.5 rounded-full flex items-center gap-2 transition-colors font-bold border border-blue-800/50">
-                  <Plus size={18} /> {t.addPassenger}
+          <div className="bg-gray-50 dark:bg-[#060B14]/50 p-6 md:p-10 rounded-[2rem] border border-gray-200 dark:border-gray-800 shadow-inner">
+            <div className="flex justify-between items-center mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+               <h4 className="font-bold text-2xl flex items-center gap-3 text-gray-900 dark:text-white"><Users size={28} className="text-brand-500"/> {t.passengers}</h4>
+               <button type="button" onClick={addPassenger} className="text-sm bg-brand-100 dark:bg-brand-900/40 hover:bg-brand-200 dark:hover:bg-brand-800/60 text-brand-600 dark:text-brand-300 px-6 py-3 rounded-full flex items-center gap-2 transition-colors font-bold border border-brand-500/20">
+                  <Plus size={20} /> {t.addPassenger}
                </button>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
                {formData.passengers.map((p, index) => (
-                 <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-sm animate-slide-up">
+                 <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end bg-white dark:bg-[#0B1120] p-6 md:p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm animate-slide-up">
                    <div className="md:col-span-4">
-                     <label className="block text-xs font-bold mb-2 text-gray-400">{t.passenger} {index + 1}</label>
-                     <input required type="text" placeholder="الاسم" value={p.name} onChange={e => updatePassenger(index, 'name', e.target.value)} className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:border-blue-500 outline-none text-white" />
+                     <label className="block text-sm font-bold mb-3 text-gray-600 dark:text-gray-400">{t.passenger} {index + 1}</label>
+                     <input required type="text" placeholder="الاسم" value={p.name} onChange={e => updatePassenger(index, 'name', e.target.value)} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none text-gray-900 dark:text-white" />
                    </div>
                    <div className="md:col-span-4">
-                     <label className="block text-xs font-bold mb-2 text-gray-400">{t.passport}</label>
-                     <input type="text" placeholder="رقم الهوية" value={p.passport} onChange={e => updatePassenger(index, 'passport', e.target.value)} className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:border-blue-500 outline-none text-white" />
+                     <label className="block text-sm font-bold mb-3 text-gray-600 dark:text-gray-400">{t.passport}</label>
+                     <input type="text" placeholder="رقم الهوية" value={p.passport} onChange={e => updatePassenger(index, 'passport', e.target.value)} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none text-gray-900 dark:text-white" />
                    </div>
                    <div className="md:col-span-3">
-                     <label className="block text-xs font-bold mb-2 text-gray-400">{t.nationality}</label>
-                     <select value={p.nationality} onChange={e => updatePassenger(index, 'nationality', e.target.value)} className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 focus:border-blue-500 outline-none text-white">
+                     <label className="block text-sm font-bold mb-3 text-gray-600 dark:text-gray-400">{t.nationality}</label>
+                     <select value={p.nationality} onChange={e => updatePassenger(index, 'nationality', e.target.value)} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none text-gray-900 dark:text-white font-bold">
                        <option value="saudi">{t.saudi}</option><option value="egyptian">{t.egyptian}</option><option value="other">{t.other}</option>
                      </select>
                    </div>
-                   <div className="md:col-span-1 flex justify-center pb-1">
-                     {formData.passengers.length > 1 && <button type="button" onClick={() => removePassenger(index)} className="p-3 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-colors"><Trash2 size={20} /></button>}
+                   <div className="md:col-span-1 flex justify-center pb-2">
+                     {formData.passengers.length > 1 && <button type="button" onClick={() => removePassenger(index)} className="p-4 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors"><Trash2 size={24} /></button>}
                    </div>
                  </div>
                ))}
             </div>
           </div>
           
-          <button type="submit" disabled={status === 'loading'} className="w-full bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-500 hover:to-teal-400 text-white py-5 rounded-2xl font-bold text-xl transition-all shadow-lg hover:shadow-blue-900/50 flex justify-center items-center gap-3">
-            {status === 'loading' ? <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : t.sendBooking}
+          <button type="submit" disabled={status === 'loading'} className="w-full bg-brand-600 hover:bg-brand-500 text-white py-6 rounded-2xl font-black text-2xl transition-all shadow-xl hover:shadow-brand-500/50 flex justify-center items-center gap-3 hover:-translate-y-1">
+            {status === 'loading' ? <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : t.sendBooking}
           </button>
         </form>
       );
@@ -577,33 +626,32 @@
       };
 
       return (
-        <div className="min-h-screen flex items-center justify-center px-4 pt-20 pb-10 bg-gray-900 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-gray-50 dark:bg-[#060B14] relative overflow-hidden">
           {/* Animated Background Elements */}
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-600/20 rounded-full blur-[120px]"></div>
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-brand-600/10 rounded-full blur-[150px] -mr-60 -mt-60"></div>
 
-          <div className="bg-gray-800 p-10 rounded-[2.5rem] shadow-2xl border border-gray-700 w-full max-w-md text-center relative z-10 animate-slide-up">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 to-teal-400 rounded-t-full"></div>
+          <div className="bg-white dark:bg-[#0B1120] p-10 md:p-14 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-gray-800 w-full max-w-lg text-center relative z-10 animate-slide-up">
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-600 to-brand-400"></div>
             
-            <div className="w-24 h-24 bg-blue-900/40 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-blue-500/20 rotate-3">
-               <Car size={48} />
+            <div className="w-28 h-28 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-3xl flex items-center justify-center mx-auto mb-10 border border-brand-500/20 rotate-3 shadow-inner">
+               <Car size={56} />
             </div>
             
-            <h2 className="text-3xl font-bold mb-3 text-white">{t.loginTitle}</h2>
-            <p className="text-gray-400 mb-10 text-lg">يرجى إدخال بيانات الاعتماد للوصول</p>
+            <h2 className="text-4xl font-black mb-4 text-gray-900 dark:text-white">{t.loginTitle}</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-12 text-lg">بوابة مخصصة لشركاء النجاح</p>
             
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="relative">
-                 <User className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-500" size={22} />
-                 <input required type="text" placeholder={t.username} value={username} onChange={e => setUsername(e.target.value)} className="w-full p-4 pr-14 text-lg rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-white" dir="ltr" />
+                 <User className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
+                 <input required type="text" placeholder={t.username} value={username} onChange={e => setUsername(e.target.value)} className="w-full p-5 pr-14 text-xl rounded-2xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none transition-all text-gray-900 dark:text-white font-bold" dir="ltr" />
               </div>
               <div className="relative">
-                 <Menu className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-500" size={22} />
-                 <input required type="password" placeholder={t.password} value={pin} onChange={e => setPin(e.target.value)} className="w-full p-4 pr-14 text-lg rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none tracking-widest transition-all text-white" dir="ltr" />
+                 <Menu className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
+                 <input required type="password" placeholder={t.password} value={pin} onChange={e => setPin(e.target.value)} className="w-full p-5 pr-14 text-xl rounded-2xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none tracking-[0.5em] transition-all text-gray-900 dark:text-white font-bold" dir="ltr" />
               </div>
               
-              <button type="submit" disabled={loading} className="w-full bg-white text-gray-900 hover:bg-gray-200 py-4 rounded-xl font-bold text-xl transition-all mt-8 flex justify-center items-center gap-2 shadow-lg">
-                {loading ? <div className="w-6 h-6 border-4 border-gray-900 border-t-transparent rounded-full animate-spin"></div> : t.login}
+              <button type="submit" disabled={loading} className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 py-5 rounded-2xl font-black text-xl transition-all mt-8 flex justify-center items-center gap-2 shadow-xl hover:-translate-y-1">
+                {loading ? <div className="w-8 h-8 border-4 border-gray-400 border-t-current rounded-full animate-spin"></div> : t.login}
               </button>
             </form>
           </div>
@@ -640,14 +688,14 @@
       };
 
       return (
-        <div className="container mx-auto px-4 py-24 max-w-5xl">
-          <div className="bg-gray-800 rounded-[2rem] shadow-2xl p-8 border border-gray-700 animate-fade-in">
-            <div className="flex justify-between items-center mb-10 border-b border-gray-700 pb-6">
-               <h2 className="text-3xl font-bold flex items-center gap-3 text-white"><FileText className="text-blue-500" size={32}/> {t.manifestTitle}</h2>
-               <div className="px-5 py-2.5 bg-blue-900/30 text-blue-400 rounded-xl font-bold border border-blue-500/20">مرحباً، {user?.name}</div>
+        <div className="container mx-auto px-4 py-32 max-w-6xl">
+          <div className="bg-white dark:bg-[#0B1120] rounded-[3rem] shadow-2xl p-8 md:p-12 border border-gray-100 dark:border-gray-800 animate-fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-gray-200 dark:border-gray-800 pb-8 gap-4">
+               <h2 className="text-3xl md:text-4xl font-black flex items-center gap-4 text-gray-900 dark:text-white"><FileText className="text-brand-500" size={40}/> {t.manifestTitle}</h2>
+               <div className="px-6 py-3 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-2xl font-bold text-lg border border-brand-500/20 shadow-sm">مرحباً، الكابتن {user?.name}</div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
               <InputGroup label="رقم الحجز" val={data.bookingNum} onChange={v => setData({...data, bookingNum: v})} />
               <InputGroup label="التاريخ" type="date" val={data.date} onChange={v => setData({...data, date: v})} />
               <InputGroup label="اليوم" val={data.day} onChange={v => setData({...data, day: v})} />
@@ -657,15 +705,15 @@
               <div className="md:col-span-3"><InputGroup label="الضيف الأساسي (صاحب الحجز)" val={data.guestName} onChange={v => setData({...data, guestName: v})} /></div>
             </div>
 
-            <h3 className="font-bold text-xl mb-5 text-blue-400 border-r-4 border-blue-500 pr-3">بيانات السائق والسيارة</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 p-6 bg-gray-900/50 rounded-2xl border border-gray-700">
+            <h3 className="font-black text-2xl mb-6 text-brand-600 dark:text-brand-400 border-r-4 border-brand-500 pr-4">بيانات السائق والسيارة</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 p-8 bg-gray-50 dark:bg-[#060B14] rounded-[2rem] border border-gray-200 dark:border-gray-800 shadow-inner">
               <InputGroup label="اسم السائق" val={data.driverName} onChange={v => setData({...data, driverName: v})} />
               <InputGroup label="هوية السائق" val={data.driverId} onChange={v => setData({...data, driverId: v})} />
               <InputGroup label="جوال السائق" val={data.driverPhone} onChange={v => setData({...data, driverPhone: v})} />
               
               <div>
-                 <label className="block text-sm font-bold mb-2 text-gray-300">نوع السيارة</label>
-                 <select value={data.carType} onChange={e => setData({...data, carType: e.target.value})} className="w-full p-4 rounded-xl bg-gray-800 border border-gray-600 outline-none text-white">
+                 <label className="block text-sm font-bold mb-3 text-gray-700 dark:text-gray-300">نوع السيارة</label>
+                 <select value={data.carType} onChange={e => setData({...data, carType: e.target.value})} className="w-full p-4 text-lg rounded-xl bg-white dark:bg-[#0B1120] border border-gray-200 dark:border-gray-700 outline-none text-gray-900 dark:text-white font-bold">
                     <option value="هيونداي ستاريا">هيونداي ستاريا</option>
                     <option value="جي ام سي يوكون">GMC يوكون</option>
                     <option value="فورد تورنيو">فورد تورنيو</option>
@@ -675,25 +723,32 @@
               <InputGroup label="رقم اللوحة" val={data.carPlate} onChange={v => setData({...data, carPlate: v})} />
             </div>
 
-            <h3 className="font-bold text-xl mb-5 text-blue-400 border-r-4 border-blue-500 pr-3">بيانات المرافقين (كشف الركاب)</h3>
-            <div className="overflow-x-auto mb-10 border border-gray-700 rounded-xl shadow-inner">
-              <table className="w-full text-sm text-center border-collapse">
-                <thead><tr className="bg-gray-900 text-gray-300"><th className="p-4 border-b border-gray-700 w-12 font-bold">#</th><th className="p-4 border-b border-r border-gray-700 font-bold">الاسم</th><th className="p-4 border-b border-r border-gray-700 w-48 font-bold">رقم الهوية / الجواز</th><th className="p-4 border-b border-r border-gray-700 w-32 font-bold">الجنسية</th></tr></thead>
+            <h3 className="font-black text-2xl mb-6 text-brand-600 dark:text-brand-400 border-r-4 border-brand-500 pr-4">بيانات المرافقين (كشف الركاب)</h3>
+            <div className="overflow-x-auto mb-12 border border-gray-200 dark:border-gray-800 rounded-[2rem] shadow-inner bg-white dark:bg-[#0B1120]">
+              <table className="w-full text-base text-center border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 dark:bg-[#060B14] text-gray-700 dark:text-gray-300">
+                    <th className="p-5 border-b border-gray-200 dark:border-gray-800 w-16 font-black text-lg">#</th>
+                    <th className="p-5 border-b border-r border-gray-200 dark:border-gray-800 font-black text-lg">الاسم</th>
+                    <th className="p-5 border-b border-r border-gray-200 dark:border-gray-800 w-64 font-black text-lg">رقم الهوية / الجواز</th>
+                    <th className="p-5 border-b border-r border-gray-200 dark:border-gray-800 w-40 font-black text-lg">الجنسية</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {data.passengers.map((p, i) => (
-                    <tr key={i} className="border-b border-gray-700 last:border-0 hover:bg-gray-750 transition-colors">
-                      <td className="p-2 font-bold text-gray-500 bg-gray-900/50">{i + 1}</td>
-                      <td className="p-0 border-r border-gray-700"><input type="text" value={p.name} onChange={e => updatePass(i, 'name', e.target.value)} className="w-full p-3 bg-transparent outline-none focus:bg-gray-700 text-white" /></td>
-                      <td className="p-0 border-r border-gray-700"><input type="text" value={p.id} onChange={e => updatePass(i, 'id', e.target.value)} className="w-full p-3 bg-transparent outline-none text-center focus:bg-gray-700 text-white" /></td>
-                      <td className="p-0 border-r border-gray-700"><input type="text" value={p.nat} onChange={e => updatePass(i, 'nat', e.target.value)} className="w-full p-3 bg-transparent outline-none text-center focus:bg-gray-700 text-white" /></td>
+                    <tr key={i} className="border-b border-gray-200 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                      <td className="p-3 font-bold text-gray-500 bg-gray-50 dark:bg-[#060B14]">{i + 1}</td>
+                      <td className="p-0 border-r border-gray-200 dark:border-gray-800"><input type="text" value={p.name} onChange={e => updatePass(i, 'name', e.target.value)} className="w-full p-4 bg-transparent outline-none focus:bg-gray-100 dark:focus:bg-gray-800 text-gray-900 dark:text-white font-semibold" /></td>
+                      <td className="p-0 border-r border-gray-200 dark:border-gray-800"><input type="text" value={p.id} onChange={e => updatePass(i, 'id', e.target.value)} className="w-full p-4 bg-transparent outline-none text-center focus:bg-gray-100 dark:focus:bg-gray-800 text-gray-900 dark:text-white font-semibold" /></td>
+                      <td className="p-0 border-r border-gray-200 dark:border-gray-800"><input type="text" value={p.nat} onChange={e => updatePass(i, 'nat', e.target.value)} className="w-full p-4 bg-transparent outline-none text-center focus:bg-gray-100 dark:focus:bg-gray-800 text-gray-900 dark:text-white font-semibold" /></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            <button onClick={handleSaveAndGenerate} disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-500 hover:to-teal-400 text-white py-5 rounded-2xl font-bold text-xl transition-all shadow-lg flex justify-center items-center gap-3">
-               {loading ? <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : t.generateManifest}
+            <button onClick={handleSaveAndGenerate} disabled={loading} className="w-full bg-brand-600 hover:bg-brand-500 text-white py-6 rounded-2xl font-black text-2xl transition-all shadow-xl hover:shadow-brand-500/40 flex justify-center items-center gap-4 hover:-translate-y-1">
+               {loading ? <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : t.generateManifest}
             </button>
           </div>
         </div>
@@ -703,22 +758,23 @@
     function InputGroup({ label, val, onChange, type = "text" }) {
       return (
         <div>
-           <label className="block text-sm font-bold mb-2 text-gray-300">{label}</label>
-           <input type={type} value={val} onChange={e => onChange(e.target.value)} className="w-full p-4 rounded-xl bg-gray-900 border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-shadow text-white" />
+           <label className="block text-sm font-bold mb-3 text-gray-700 dark:text-gray-300">{label}</label>
+           <input type={type} value={val} onChange={e => onChange(e.target.value)} className="w-full p-4 text-lg rounded-xl bg-white dark:bg-[#0B1120] border border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-shadow text-gray-900 dark:text-white font-semibold" />
         </div>
       );
     }
 
-    // --- STREAMING_CHUNK:Printable Manifest Views ---
+    // --- STREAMING_CHUNK: Printable Manifest View (Stays strict for PDF) ---
     function ManifestView({ data, t, onBack }) {
       const qrUrl = `${window.location.origin}${window.location.pathname}?manifest=${data.id}`;
       return (
-        <div className="bg-gray-900 min-h-screen py-8 pt-24 print:py-0 print:bg-white text-black" dir="rtl">
+        <div className="bg-gray-100 dark:bg-gray-900 min-h-screen py-8 pt-24 print:py-0 print:bg-white text-black" dir="rtl">
           <div className="container mx-auto px-4 mb-8 print:hidden flex justify-between items-center max-w-4xl">
              <button onClick={onBack} className="bg-gray-800 text-white px-6 py-2.5 rounded-xl shadow-lg font-bold hover:bg-gray-700 transition-colors">رجوع</button>
-             <button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-2.5 rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.4)] font-bold flex items-center gap-2 transition-colors"><FileText size={20}/> طباعة / حفظ كـ PDF</button>
+             <button onClick={() => window.print()} className="bg-brand-600 hover:bg-brand-500 text-white px-8 py-2.5 rounded-xl shadow-[0_0_15px_rgba(14,165,233,0.4)] font-bold flex items-center gap-2 transition-colors"><FileText size={20}/> طباعة / حفظ كـ PDF</button>
           </div>
           
+          {/* الكشوفات الورقية تبقى كما هي لضمان الاعتماد الرسمي */}
           {/* Page 1 */}
           <div className="print-container bg-white shadow-2xl mx-auto p-8 mb-8 page-break border border-gray-200 print:border-none print:shadow-none font-arabic relative overflow-hidden text-black rounded-xl print:rounded-none">
             <div className="flex justify-between items-start mb-6 border-b-2 border-black pb-4"><div className="text-right flex-1"><h1 className="text-2xl font-bold mb-1">شركة بلو سكاي ترافل</h1><p className="text-sm">للنقل المتخصص</p><p className="text-sm">ترخيص رقم : 35/00008556</p></div><div className="text-center flex-1"><h2 className="text-3xl font-bold mb-2 mt-2">كشف الركاب</h2><p className="font-bold border border-black inline-block px-4 py-1">رقم الحجز: {data.bookingNum || '---'}</p></div><div className="text-left flex-1 flex flex-col items-end"><div className="text-2xl font-bold text-blue-900 mb-1">BST</div><div className="text-xs font-bold text-blue-900 uppercase">Blue Sky Transport</div><div className="mt-2 border-2 border-black p-1.5 bg-white"><QRCodeSVG value={qrUrl} size={70} level={"L"} /></div></div></div>
@@ -766,27 +822,45 @@
     // --- STREAMING_CHUNK:Footer & Utilities ---
     function Footer({ t }) {
       return (
-        <footer className="bg-gray-950 text-white pt-20 pb-10 border-t border-gray-800 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[100px] pointer-events-none"></div>
-          <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-12 mb-12 relative z-10">
-            <div><h3 className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-white">{t.title}</h3><p className="text-gray-400 mb-6 leading-relaxed text-lg">{t.footerDesc}</p></div>
-            <div><h4 className="text-xl font-bold mb-6">{t.contact}</h4><ul className="space-y-4 text-gray-400"><li className="flex items-start gap-3"><MapPin size={24} className="text-blue-500 shrink-0"/> <span className="text-lg">{t.addressText}</span></li><li className="flex items-center gap-3 text-lg" dir="ltr"><Phone size={24} className="text-blue-500"/> +966 59 914 1695</li></ul></div>
-            <div><h4 className="text-xl font-bold mb-6">تواصل اجتماعي</h4><div className="flex gap-4"><a href="#" className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-110 shadow-lg border border-gray-700"><span className="font-bold">FB</span></a><a href="#" className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-all hover:scale-110 shadow-lg border border-gray-700"><span className="font-bold text-white">TK</span></a><a href="#" className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center hover:bg-pink-600 transition-all hover:scale-110 shadow-lg border border-gray-700"><span className="font-bold">IG</span></a></div></div>
+        <footer className="bg-gray-900 text-white pt-24 pb-12 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+          <div className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-16 mb-16 relative z-10 max-w-6xl">
+            <div>
+               <div className="flex items-center gap-3 mb-6">
+                 <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-black text-2xl shadow-lg">M</div>
+                 <span className="font-black text-2xl text-white">المسار <span className="text-brand-500">الآمن</span></span>
+               </div>
+               <p className="text-gray-400 mb-6 leading-relaxed text-lg font-medium">{t.footerDesc}</p>
+            </div>
+            <div>
+               <h4 className="text-2xl font-bold mb-8 text-white">{t.contact}</h4>
+               <ul className="space-y-5 text-gray-400">
+                  <li className="flex items-start gap-4"><MapPin size={28} className="text-brand-500 shrink-0"/> <span className="text-lg font-medium">{t.addressText}</span></li>
+                  <li className="flex items-center gap-4 text-xl font-bold text-white" dir="ltr"><Phone size={28} className="text-brand-500"/> +966 59 914 1695</li>
+               </ul>
+            </div>
+            <div>
+               <h4 className="text-2xl font-bold mb-8 text-white">تواصل اجتماعي</h4>
+               <div className="flex gap-5">
+                  <a href="#" className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center hover:bg-brand-600 transition-all hover:scale-110 shadow-lg border border-gray-700 text-gray-300 hover:text-white"><span className="font-bold text-lg">FB</span></a>
+                  <a href="#" className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center hover:bg-white transition-all hover:scale-110 shadow-lg border border-gray-700 text-gray-300 hover:text-gray-900"><span className="font-bold text-lg">TK</span></a>
+                  <a href="#" className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center hover:bg-pink-600 transition-all hover:scale-110 shadow-lg border border-gray-700 text-gray-300 hover:text-white"><span className="font-bold text-lg">IG</span></a>
+               </div>
+            </div>
           </div>
-          <div className="text-center text-gray-500 border-t border-gray-800 pt-8 text-sm">© {new Date().getFullYear()} {t.title}. جميع الحقوق محفوظة.</div>
+          <div className="text-center text-gray-500 border-t border-gray-800 pt-8 text-sm font-bold">© {new Date().getFullYear()} {t.title}. جميع الحقوق محفوظة.</div>
         </footer>
       );
     }
     
     function WhatsAppButton() { 
        return (
-          <a href="https://wa.me/966599141695" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-400 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_30px_rgba(34,197,94,0.6)] hover:scale-110 transition-all cursor-pointer" title="تواصل عبر واتساب">
+          <a href="https://wa.me/966599141695" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-8 z-50 bg-green-500 hover:bg-green-400 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] hover:scale-110 hover:-translate-y-2 transition-all cursor-pointer" title="تواصل عبر واتساب">
              <MessageCircle size={36} />
           </a>
        ); 
     }
     
-    // إطلاق التطبيق
     const root = createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>

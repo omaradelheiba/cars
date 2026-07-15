@@ -327,10 +327,10 @@
               
               <div className={`flex items-center gap-4 border-${lang === 'ar' ? 'r' : 'l'} border-gray-300 dark:border-gray-700 p${lang === 'ar' ? 'r' : 'l'}-4`}>
                 
-                {/* LANGUAGE TOGGLE BUTTON */}
+                {/* LANGUAGE TOGGLE BUTTON - FIXED VISIBILITY */}
                 <button 
                   onClick={toggleLang} 
-                  className={`p-2.5 rounded-full backdrop-blur-md transition-all hover:scale-110 flex items-center gap-1 ${scrolled || theme==='light' ? 'bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-brand-400' : 'bg-white/10 text-brand-400 hover:bg-white/20'}`}
+                  className={`p-2.5 rounded-full backdrop-blur-md transition-all hover:scale-110 flex items-center gap-1 ${scrolled || theme==='light' ? 'bg-gray-200 dark:bg-gray-800 text-brand-600 dark:text-brand-400' : 'bg-white/10 text-white hover:bg-white/20'}`}
                   title={lang === 'ar' ? 'Change Language' : 'تغيير اللغة'}
                 >
                   <Globe size={20} />
@@ -340,7 +340,7 @@
                 {/* THEME TOGGLE BUTTON - FIXED */}
                 <button 
                   onClick={toggleTheme} 
-                  className={`p-2.5 rounded-full backdrop-blur-md transition-all hover:scale-110 ${scrolled || theme==='light' ? 'bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-yellow-400' : 'bg-white/10 text-yellow-400 hover:bg-white/20'}`}
+                  className={`p-2.5 rounded-full backdrop-blur-md transition-all hover:scale-110 ${scrolled || theme==='light' ? 'bg-gray-200 dark:bg-gray-800 text-yellow-500 dark:text-yellow-400' : 'bg-white/10 text-yellow-400 hover:bg-white/20'}`}
                   title={lang === 'ar' ? 'تغيير المظهر' : 'Toggle Theme'}
                 >
                   {theme === 'dark' ? <Sun size={20} className="animate-spin-slow" /> : <Moon size={20} />}
@@ -354,10 +354,10 @@
 
             {/* Mobile Toggle */}
             <div className="md:hidden flex items-center gap-4">
-              <button onClick={toggleLang} className={`p-2 font-bold uppercase text-sm ${scrolled || theme==='light' ? 'text-gray-900 dark:text-brand-400' : 'text-brand-400'}`}>
+              <button onClick={toggleLang} className={`p-2 font-bold uppercase text-sm ${scrolled || theme==='light' ? 'text-brand-600 dark:text-brand-400' : 'text-white'}`}>
                 {lang === 'ar' ? 'EN' : 'عربي'}
               </button>
-              <button onClick={toggleTheme} className={`p-2 rounded-full ${scrolled || theme==='light' ? 'text-gray-800 dark:text-yellow-400' : 'text-yellow-400'}`}>
+              <button onClick={toggleTheme} className={`p-2 rounded-full ${scrolled || theme==='light' ? 'text-yellow-500 dark:text-yellow-400' : 'text-yellow-400'}`}>
                 {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
               </button>
               <button onClick={() => setIsOpen(!isOpen)} className={scrolled || theme==='light' ? 'text-gray-900 dark:text-white' : 'text-white'}>

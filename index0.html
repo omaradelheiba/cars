@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>المسار الآمن للنقل والرحلات</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    window.process = { env: { NODE_ENV: 'production' } };
+    
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e', 950: '#082f49' },
+            gold: { 400: '#fbbf24', 500: '#f59e0b' }
+          },
+          animation: {
+            'fade-in': 'fadeIn 1s ease-out forwards',
+            'slide-up': 'slideUp 0.8s ease-out forwards',
+            'float': 'float 6s ease-in-out infinite',
+            'ken-burns': 'kenBurns 15s ease-out infinite alternate',
+            'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(50px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-15px)' } },
+            kenBurns: { '0%': { transform: 'scale(1)' }, '100%': { transform: 'scale(1.15)' } },
+            pulseGlow: { '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(14, 165, 233, 0.5)' }, '50%': { opacity: '0.5', boxShadow: '0 0 30px rgba(14, 165, 233, 0.8)' } }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Outfit:wght@300;400;600;700;900&display=swap');
+    
+    body { scroll-behavior: smooth; }
+    .font-arabic { font-family: 'Cairo', sans-serif; }
+    .font-english { font-family: 'Outfit', sans-serif; }
+    
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* تأثيرات الزجاج المتطورة */
+    .glass-dark {
+      background: rgba(8, 15, 30, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .glass-light {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .clip-path-slant {
+      clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+    }
+
+    /* إعدادات الطباعة للكشف */
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      body { background: white !important; color: black !important; }
+      .print\:hidden { display: none !important; }
+      .page-break { page-break-after: always; }
+      .print-container { width: 100%; max-width: 210mm; margin: 0 auto; padding: 15mm; }
+      .print-table th, .print-table td { border: 1px solid #000 !important; color: #000 !important; }
+    }
+  </style>
+
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+        "react-dom": "https://esm.sh/react-dom@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.292.0",
+        "qrcode.react": "https://esm.sh/qrcode.react@3.1.0"
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-[#060B14] dark:text-white overflow-x-hidden transition-colors duration-500">
+  
+  <div id="root"></div>
+
+  <script type="text/babel" data-type="module" data-presets="react">
+    import React, { useState, useEffect, useRef } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { QRCodeSVG } from 'qrcode.react';
+    import { Moon, Sun, Globe, Phone, MapPin, Menu, X, Plus, Trash2, CheckCircle, Car, Users, Star, MessageCircle, FileText, ArrowRight, User, ShieldCheck, Clock, Award, ChevronDown } from 'lucide-react';
+
+    // الرابط السري الخاص بجوجل سكريبت
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMt_PgL02L9D_J_E4dQ-IJ-dlxNT7ZfJzKS2JKBW0WrXXzPTgJF5ldzOaekHy6JlCcdA/exec";
+
+    // دالة الاتصال بالخادم
+    const apiCall = async (action, payload = {}) => {
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action, ...payload })
+        });
+        return await response.json();
+      } catch (error) {
+        console.error("API Error:", error);
+        return { success: false, error: error.message };
+      }
+    };
+
+    // مكون حركة الدخول الانسيابية
+    function FadeInWhenVisible({ children, delay = 0, className = "" }) {
+      const [isVisible, setIsVisible] = useState(false);
+      const domRef = useRef();
+
+      useEffect(() => {
+        const observer = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              setIsVisible(true);
+              observer.unobserve(domRef.current);
+            }
+          });
+        }, { threshold: 0.1 });
+        
+        if (domRef.current) observer.observe(domRef.current);
+        return () => { if (domRef.current) observer.unobserve(domRef.current); };
+      }, []);
+
+      return (
+        <div
+          ref={domRef}
+          className={`transition-all duration-1000 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'} ${className}`}
+          style={{ transitionDelay: `${delay}ms` }}
+        >
+          {children}
+        </div>
+      );
+    }
+
+    // --- البيانات والمحتوى ---
+    const dict = {
+      ar: {
+        title: 'المسار الآمن للنقل والرحلات', home: 'الرئيسية', fleet: 'أسطولنا', book: 'احجز رحلتك',
+        driverLogin: 'بوابة السائقين', heroTitle: 'ارتقِ بتجربة سفرك نحو الفخامة',
+        heroSub: 'أسطول من أحدث سيارات الـ SUV والفانات العائلية باللون الأسود الملكي. نضمن لك ولعائلتك رحلة آمنة، مريحة، ولا تُنسى.',
+        bookNow: 'اكتشف الرحلة', ourFleet: 'أسطول النخبة', fleetSub: 'سيارات فاخرة مجهزة بأعلى معايير الراحة والأمان العالمي',
+        passenger: 'مرافق', passengers: 'المرافقين', addPassenger: 'إضافة مرافق',
+        customerName: 'الاسم الكامل للعميل', mobile: 'رقم الجوال', passport: 'رقم الهوية / الجواز',
+        nationality: 'الجنسية', sendBooking: 'تأكيد الحجز الفاخر', bookingSuccess: 'تم استلام حجزك بنجاح! سيقوم فريقنا بالتواصل معك فوراً.',
+        loginTitle: 'بوابة السائقين المعتمدين', username: 'اسم المستخدم', password: 'كلمة المرور', login: 'تسجيل الدخول',
+        manifestTitle: 'إصدار كشف ركاب إلكتروني', driverName: 'اسم السائق', driverId: 'رقم الهوية',
+        carPlate: 'رقم اللوحة', carColor: 'لون السيارة', carType: 'نوع السيارة',
+        from: 'جهة القدوم', to: 'جهة الوصول', flightNum: 'رقم الرحلة', date: 'التاريخ', day: 'اليوم',
+        generateManifest: 'اعتماد وإصدار الكشف (PDF)', printManifest: 'طباعة الكشف', testimonials: 'آراء شركاء النجاح',
+        footerDesc: 'الخيار الأول للنقل المتخصص والرحلات الفاخرة في المملكة العربية السعودية.', address: 'العنوان', addressText: 'مكة المكرمة - العزيزية - بجوار مول العائلة',
+        contact: 'خدمة العملاء', saudi: 'سعودي', egyptian: 'مصري', other: 'أخرى', featuresTitle: 'لماذا المسار الآمن؟'
+      },
+      en: {
+        title: 'Safe Path Transport', home: 'Home', fleet: 'Our Fleet', book: 'Book a Trip',
+        driverLogin: 'Driver Portal', heroTitle: 'Elevate Your Travel to Luxury',
+        heroSub: 'A fleet of the latest SUVs and family vans in royal black. We guarantee you and your family a safe, comfortable, and unforgettable journey.',
+        bookNow: 'Discover the Journey', ourFleet: 'Elite Fleet', fleetSub: 'Luxury vehicles equipped with the highest standards of comfort and global safety',
+        passenger: 'Companion', passengers: 'Companions', addPassenger: 'Add Companion',
+        customerName: 'Customer Full Name', mobile: 'Mobile Number', passport: 'ID / Passport Number',
+        nationality: 'Nationality', sendBooking: 'Confirm Luxury Booking', bookingSuccess: 'Your booking has been received successfully! Our team will contact you immediately.',
+        loginTitle: 'Certified Drivers Portal', username: 'Username', password: 'Password', login: 'Login',
+        manifestTitle: 'Issue Electronic Passenger Manifest', driverName: 'Driver Name', driverId: 'ID Number',
+        carPlate: 'Plate Number', carColor: 'Car Color', carType: 'Car Type',
+        from: 'From', to: 'To', flightNum: 'Flight Number', date: 'Date', day: 'Day',
+        generateManifest: 'Approve & Issue Manifest (PDF)', printManifest: 'Print Manifest', testimonials: 'Success Partners Reviews',
+        footerDesc: 'The first choice for specialized transport and luxury trips in Saudi Arabia.', address: 'Address', addressText: 'Makkah - Al Aziziya - Next to Family Mall',
+        contact: 'Customer Service', saudi: 'Saudi', egyptian: 'Egyptian', other: 'Other', featuresTitle: 'Why Safe Path?'
+      }
+    };
+
+    // تم تغيير الصور لسيارات حقيقية فخمة (سوداء/كحلي داكن)
+    const cars = [
+      { id: 1, name: 'هيونداي ستاريا (7 مقاعد)', nameEn: 'Hyundai Staria (7 Seats)', descAr: 'فخامة واتساع لا مثيل له، مقاعد مريحة كدرجة رجال الأعمال. (أسود ملكي)', descEn: 'Unmatched luxury and spaciousness, business class seats. (Royal Black)', img: 'https://www.hyundai.com/content/dam/hyundai/template_en/en/images/find-a-car/pip/staria/highlights/staria-us4-highlights-premium-pc.jpg' },
+      { id: 2, name: 'جي إم سي يوكون (GMC)', nameEn: 'GMC Yukon', descAr: 'هيبة الحضور وقوة الأداء، الخيار الأمثل للعائلات الباحثة عن الرفاهية والأمان. (أسود لامع)', descEn: 'Strong presence and performance, the perfect choice for families seeking luxury and safety. (Glossy Black)', img: 'https://www.gmc.com/content/dam/gmc/na/us/english/index/vehicles/2026/suvs/yukon/overview/capability/v2/my26-yukon-mov-capability-adaptive-suspension-1280x720-26PGYK100928.jpg?imwidth=1920' },
+      { id: 3, name: 'فورد تورنيو كاستم', nameEn: 'Ford Tourneo Custom', descAr: 'مرونة عالية ومساحة تخزين ضخمة، مصممة خصيصاً لرحلات المطار الطويلة. (كحلي داكن)', descEn: 'High flexibility and massive storage space, specially designed for long airport trips. (Dark Navy)', img: 'https://parkers-images.bauersecure.com/wp-images/245473/082-ford-tourneo-custom-front-static.jpg' },
+      { id: 4, name: 'هيونداي ستاريا (9 مقاعد)', nameEn: 'Hyundai Staria (9 Seats)', descAr: 'النسخة الأكبر للعائلات الممتدة، رحابة داخلية مذهلة للرحلات الطويلة. (رمادي داكن)', descEn: 'The larger version for extended families, amazing interior spaciousness for long trips. (Dark Gray)', img: 'https://media.drive.com.au/obj/tx_q:50,rs:auto:1920:1080:1/driveau/upload/cms/uploads/kkqagsuh1ivsekrobyyn' },
+    ];
+
+    const features = [
+      { icon: <ShieldCheck size={36} />, titleAr: 'أمان لا يساوم', titleEn: 'Uncompromising Safety', descAr: 'أسطولنا مجهز بأحدث أنظمة السلامة الذكية لحمايتك في كل ميل.', descEn: 'Our fleet is equipped with the latest smart safety systems to protect you every mile.' },
+      { icon: <Clock size={36} />, titleAr: 'دقة المواعيد', titleEn: 'Punctuality', descAr: 'نقدر وقتك. سائقونا متواجدون قبل الموعد المحدد لضمان انطلاقك بسلاسة.', descEn: 'We value your time. Our drivers arrive before the scheduled time to ensure a smooth departure.' },
+      { icon: <Award size={36} />, titleAr: 'خدمة كبار الشخصيات', titleEn: 'VIP Service', descAr: 'تجربة سفر متكاملة تبدأ من لحظة استقبالك وحتى وصولك لوجهتك.', descEn: 'An integrated travel experience starting from the moment we receive you until you reach your destination.' },
+    ];
+
+    const reviews = [
+      { id: 1, name: 'أحمد محمود', nameEn: 'Ahmed Mahmoud', rating: 5, text: 'تعامل راقي جداً وسيارات هيونداي ستاريا جديدة ومريحة للغاية. السائق كان في الموعد بالضبط.', textEn: 'Very classy dealing and the Hyundai Staria cars are new and extremely comfortable. The driver was exactly on time.' },
+      { id: 2, name: 'سارة خالد', nameEn: 'Sarah Khaled', rating: 5, text: 'رحلتنا من جدة لمكة كانت ممتازة. سيارة GMC واسعة وتكفي العائلة كلها مع الشنط الكبيرة براحة.', textEn: 'Our trip from Jeddah to Makkah was excellent. The GMC car is spacious and fits the whole family with large bags comfortably.' },
+      { id: 3, name: 'محمد عبدالسلام', nameEn: 'Mohamed Abdelsalam', rating: 5, text: 'خدمة عملاء سريعة الرد وحجز سهل. تجربة السفر في الفورد تورنيو كانت مريحة جداً.', textEn: 'Fast responding customer service and easy booking. The travel experience in the Ford Tourneo was very comfortable.' },
+      { id: 4, name: 'فهد العتيبي', nameEn: 'Fahad Al-Otaibi', rating: 5, text: 'السائق محترم جداً والقيادة آمنة. أفضل شركة تعاملت معاها لنقل المطار.', textEn: 'The driver is very respectful and the driving is safe. Best company I dealt with for airport transfers.' },
+    ];
+
+    // --- STREAMING_CHUNK: Main App ---
+    function App() {
+      // Default to dark mode for a luxury feel
+      const [theme, setTheme] = useState('dark');
+      const [lang, setLang] = useState('ar');
+      const [currentPage, setCurrentPage] = useState('home');
+      const [user, setUser] = useState(null);
+      const [viewedManifestData, setViewedManifestData] = useState(null);
+
+      const t = dict[lang]; 
+      const isRTL = lang === 'ar';
+
+      useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const manifestId = params.get('manifest');
+        if (manifestId) fetchManifest(manifestId);
+      }, []);
+
+      useEffect(() => {
+        document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+        document.documentElement.lang = lang;
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        }
+      }, [theme, isRTL, lang]);
+
+      const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+      const toggleLang = () => setLang(prev => prev === 'ar' ? 'en' : 'ar');
+
+      const fetchManifest = async (id) => {
+        const res = await apiCall('getManifest', { manifestId: id });
+        if (res.success) {
+          setViewedManifestData({ id, ...res.payload });
+          setCurrentPage('view-manifest');
+        } else {
+          alert(lang === 'ar' ? 'الكشف غير موجود أو تم حذفه.' : 'Manifest not found or deleted.');
+          setCurrentPage('home');
+        }
+      };
+
+      const navTo = (page) => {
+        try { window.history.replaceState({}, '', window.location.pathname); } catch (e) {}
+        setViewedManifestData(null);
+        setCurrentPage(page);
+        window.scrollTo(0, 0);
+      };
+
+      return (
+        <div className={`min-h-screen ${isRTL ? 'font-arabic' : 'font-english'} selection:bg-brand-500 selection:text-white`}>
+          <div className="print:hidden">
+            <Navbar t={t} theme={theme} toggleTheme={toggleTheme} lang={lang} toggleLang={toggleLang} navTo={navTo} currentPage={currentPage} />
+          </div>
+
+          <main className="print:p-0 print:m-0">
+            {currentPage === 'home' && <Home t={t} navTo={navTo} theme={theme} lang={lang} isRTL={isRTL} />}
+            {currentPage === 'driver-login' && <DriverLogin t={t} lang={lang} onLogin={(driverName) => { setUser({ name: driverName }); navTo('driver-dashboard'); }} />}
+            {currentPage === 'driver-dashboard' && <DriverDashboard t={t} user={user} lang={lang} onManifestCreated={(data) => {
+              setViewedManifestData(data);
+              setCurrentPage('view-manifest');
+            }} />}
+            {currentPage === 'view-manifest' && viewedManifestData && (
+              <ManifestView t={t} data={viewedManifestData} lang={lang} onBack={() => navTo('driver-dashboard')} />
+            )}
+          </main>
+
+          <div className="print:hidden">
+            {currentPage !== 'view-manifest' && <Footer t={t} lang={lang} isRTL={isRTL} />}
+            <WhatsAppButton />
+          </div>
+        </div>
+      );
+    }
+
+    // --- STREAMING_CHUNK: Navbar ---
+    function Navbar({ t, theme, toggleTheme, lang, toggleLang, navTo, currentPage }) {
+      const [isOpen, setIsOpen] = useState(false);
+      const [scrolled, setScrolled] = useState(false);
+
+      useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      const scrollToSection = (id) => { 
+        navTo('home'); 
+        setTimeout(() => { 
+          const el = document.getElementById(id); 
+          if (el) el.scrollIntoView({ behavior: 'smooth' }); 
+        }, 100); 
+      };
+
+      const glassClass = theme === 'dark' ? 'glass-dark' : 'glass-light';
+      const navClass = `fixed w-full z-50 transition-all duration-500 ${scrolled ? glassClass + ' py-2' : 'bg-transparent py-4'}`;
+
+      return (
+        <nav className={navClass}>
+          <div className="container mx-auto px-6 flex justify-between items-center">
+            {/* Logo */}
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navTo('home')}>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-brand-500/30 group-hover:rotate-12 transition-transform duration-300">
+                M
+              </div>
+              <span className={`font-black text-2xl tracking-tight transition-colors ${scrolled || theme === 'light' ? 'text-gray-900 dark:text-white' : 'text-white'}`}>
+                {lang === 'ar' ? 'المسار' : 'Safe'} <span className="text-brand-500">{lang === 'ar' ? 'الآمن' : 'Path'}</span>
+              </span>
+            </div>
+
+            {/* Desktop Links */}
+            <div className="hidden md:flex items-center gap-8">
+              <button onClick={() => navTo('home')} className={`font-bold hover:text-brand-500 transition-colors ${currentPage === 'home' ? 'text-brand-500' : (scrolled || theme==='light' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-100')}`}>{t.home}</button>
+              <button onClick={() => scrollToSection('fleet')} className={`font-bold hover:text-brand-500 transition-colors ${(scrolled || theme==='light') ? 'text-gray-700 dark:text-gray-300' : 'text-gray-100'}`}>{t.fleet}</button>
+              <button onClick={() => scrollToSection('book')} className={`font-bold hover:text-brand-500 transition-colors ${(scrolled || theme==='light') ? 'text-gray-700 dark:text-gray-300' : 'text-gray-100'}`}>{t.book}</button>
+              
+              <div className={`flex items-center gap-4 border-${lang === 'ar' ? 'r' : 'l'} border-gray-300 dark:border-gray-700 p${lang === 'ar' ? 'r' : 'l'}-4`}>
+                
+                {/* LANGUAGE TOGGLE BUTTON */}
+                <button 
+                  onClick={toggleLang} 
+                  className={`p-2.5 rounded-full backdrop-blur-md transition-all hover:scale-110 flex items-center gap-1 ${scrolled || theme==='light' ? 'bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-brand-400' : 'bg-white/10 text-brand-400 hover:bg-white/20'}`}
+                  title={lang === 'ar' ? 'Change Language' : 'تغيير اللغة'}
+                >
+                  <Globe size={20} />
+                  <span className="text-xs font-bold uppercase">{lang === 'ar' ? 'EN' : 'عربي'}</span>
+                </button>
+
+                {/* THEME TOGGLE BUTTON - FIXED */}
+                <button 
+                  onClick={toggleTheme} 
+                  className={`p-2.5 rounded-full backdrop-blur-md transition-all hover:scale-110 ${scrolled || theme==='light' ? 'bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-yellow-400' : 'bg-white/10 text-yellow-400 hover:bg-white/20'}`}
+                  title={lang === 'ar' ? 'تغيير المظهر' : 'Toggle Theme'}
+                >
+                  {theme === 'dark' ? <Sun size={20} className="animate-spin-slow" /> : <Moon size={20} />}
+                </button>
+
+                <button onClick={() => navTo('driver-login')} className="px-6 py-2.5 rounded-full bg-brand-600 hover:bg-brand-500 text-white transition-all shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_25px_rgba(14,165,233,0.6)] hover:-translate-y-1 font-bold flex items-center gap-2">
+                  <Car size={18} /> {t.driverLogin}
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Toggle */}
+            <div className="md:hidden flex items-center gap-4">
+              <button onClick={toggleLang} className={`p-2 font-bold uppercase text-sm ${scrolled || theme==='light' ? 'text-gray-900 dark:text-brand-400' : 'text-brand-400'}`}>
+                {lang === 'ar' ? 'EN' : 'عربي'}
+              </button>
+              <button onClick={toggleTheme} className={`p-2 rounded-full ${scrolled || theme==='light' ? 'text-gray-800 dark:text-yellow-400' : 'text-yellow-400'}`}>
+                {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+              </button>
+              <button onClick={() => setIsOpen(!isOpen)} className={scrolled || theme==='light' ? 'text-gray-900 dark:text-white' : 'text-white'}>
+                {isOpen ? <X size={28} /> : <Menu size={28} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Menu */}
+          {isOpen && (
+            <div className={`md:hidden px-6 py-6 space-y-5 border-t mt-4 shadow-2xl ${theme === 'dark' ? 'bg-[#0B1120] border-gray-800' : 'bg-white border-gray-200'}`}>
+               <button onClick={() => { navTo('home'); setIsOpen(false); }} className="block w-full text-start font-bold text-lg">{t.home}</button>
+               <button onClick={() => { scrollToSection('fleet'); setIsOpen(false); }} className="block w-full text-start font-bold text-lg">{t.fleet}</button>
+               <button onClick={() => { scrollToSection('book'); setIsOpen(false); }} className="block w-full text-start font-bold text-lg">{t.book}</button>
+               <button onClick={() => { navTo('driver-login'); setIsOpen(false); }} className="block w-full text-start text-brand-500 font-bold text-lg pt-4 border-t border-gray-200 dark:border-gray-800">{t.driverLogin}</button>
+            </div>
+          )}
+        </nav>
+      );
+    }
+
+    // --- STREAMING_CHUNK: Home Content ---
+    function Home({ t, navTo, theme, lang, isRTL }) {
+      const scrollToBook = () => { const el = document.getElementById('book'); if (el) el.scrollIntoView({ behavior: 'smooth' }); };
+      
+      return (
+        <div className="flex flex-col">
+          {/* Hero Section */}
+          <section className="relative h-screen flex items-center justify-center overflow-hidden clip-path-slant pb-20">
+            <div className="absolute inset-0 z-0 bg-black">
+               {/* فيديو قيادة سيارة في مدينة ليلية - يعطي طابع فخم وحيوي */}
+               <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 animate-ken-burns">
+                  <source src="video.mp4" type="video/mp4" />
+               </video>
+              <div className="absolute inset-0 bg-gradient-to-b from-[#060B14]/80 via-[#060B14]/40 to-[#060B14]"></div>
+            </div>
+            
+            <div className="relative z-10 text-center px-4 max-w-5xl mx-auto mt-24">
+              <div className="animate-fade-in">
+                <div className="inline-block px-4 py-1.5 rounded-full border border-brand-500/30 bg-brand-500/10 backdrop-blur-sm text-brand-400 font-bold text-sm mb-6 animate-pulse">
+                   {lang === 'ar' ? 'الخيار الأول لكبار الشخصيات' : 'The First Choice for VIPs'}
+                </div>
+                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 text-white drop-shadow-2xl leading-[1.2]">
+                  {t.heroTitle}
+                </h1>
+                <p className="text-lg md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto font-medium leading-relaxed opacity-90">
+                  {t.heroSub}
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                  <button onClick={scrollToBook} className="w-full sm:w-auto inline-flex justify-center items-center gap-3 bg-brand-600 hover:bg-brand-500 text-white px-10 py-5 rounded-full text-xl font-bold transition-all shadow-[0_0_30px_rgba(14,165,233,0.5)] hover:shadow-[0_0_50px_rgba(14,165,233,0.8)] hover:-translate-y-1">
+                    {t.bookNow} <ArrowRight size={24} className={isRTL ? 'rotate-180' : ''} />
+                  </button>
+                  <button onClick={() => { const el = document.getElementById('fleet'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="w-full sm:w-auto inline-flex justify-center items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-10 py-5 rounded-full text-xl font-bold transition-all hover:-translate-y-1">
+                    {lang === 'ar' ? 'استكشف الأسطول' : 'Explore Fleet'}
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 text-white/50 animate-bounce cursor-pointer" onClick={() => { const el = document.getElementById('features'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}>
+               <ChevronDown size={40} className="opacity-70 hover:opacity-100 transition-opacity text-brand-400" />
+            </div>
+          </section>
+
+          {/* Features Section */}
+          <section id="features" className="py-24 relative -mt-10">
+             <div className="container mx-auto px-6 relative z-10">
+                <FadeInWhenVisible>
+                  <div className="text-center mb-16">
+                     <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white">{t.featuresTitle}</h2>
+                     <div className="w-24 h-1.5 bg-gradient-to-r from-brand-600 to-brand-400 mx-auto mt-6 rounded-full"></div>
+                  </div>
+                </FadeInWhenVisible>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                   {features.map((f, i) => (
+                      <FadeInWhenVisible key={i} delay={i * 200}>
+                         <div className="text-center p-10 rounded-[2.5rem] bg-white dark:bg-[#0B1120] shadow-xl dark:shadow-2xl border border-gray-100 dark:border-gray-800 hover:-translate-y-3 transition-all duration-500 group">
+                            <div className="w-24 h-24 mx-auto bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300 shadow-inner">
+                               {f.icon}
+                            </div>
+                            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{lang === 'ar' ? f.titleAr : f.titleEn}</h3>
+                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">{lang === 'ar' ? f.descAr : f.descEn}</p>
+                         </div>
+                      </FadeInWhenVisible>
+                   ))}
+                </div>
+             </div>
+          </section>
+
+          {/* Fleet Section */}
+          <section id="fleet" className="py-24 bg-gray-50 dark:bg-[#080D18]">
+            <div className="container mx-auto px-6">
+              <FadeInWhenVisible>
+                <div className="text-center mb-20">
+                  <h2 className="text-4xl md:text-5xl font-black mb-6 text-gray-900 dark:text-white">{t.ourFleet}</h2>
+                  <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">{t.fleetSub}</p>
+                </div>
+              </FadeInWhenVisible>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl mx-auto">
+                {cars.map((car, i) => (
+                   <FadeInWhenVisible key={car.id} delay={i * 150}>
+                    <div className="group relative bg-black rounded-[2.5rem] overflow-hidden shadow-2xl h-[500px] cursor-pointer">
+                      {/* Image with zoom effect */}
+                      <div className="absolute inset-0">
+                        <img src={car.img} alt={lang === 'ar' ? car.name : car.nameEn} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-70 group-hover:opacity-100" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#060B14] via-[#060B14]/40 to-transparent opacity-90 group-hover:opacity-70 transition-opacity duration-500"></div>
+                      </div>
+                      
+                      {/* Passenger Badge */}
+                      <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-md px-5 py-2.5 rounded-full text-white text-sm font-bold flex items-center gap-2 border border-white/20 shadow-lg">
+                        <Users size={18} className="text-brand-400" /> {car.name.includes('9') ? '9' : '7'} {t.passengers}
+                      </div>
+
+                      {/* Content Reveal */}
+                      <div className="absolute bottom-0 left-0 w-full p-8 md:p-10 transform translate-y-10 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                        <div className="w-12 h-1 bg-brand-500 mb-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100"></div>
+                        <h3 className="text-3xl md:text-4xl font-bold mb-4 text-white drop-shadow-lg">
+                           {lang === 'ar' ? car.name : car.nameEn}
+                        </h3>
+                        <p className="text-gray-300 leading-relaxed text-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
+                           {lang === 'ar' ? car.descAr : car.descEn}
+                        </p>
+                      </div>
+                    </div>
+                  </FadeInWhenVisible>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Booking Form Section */}
+          <section id="book" className="py-24 relative overflow-hidden">
+             {/* Glow Backgrounds */}
+             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-600/10 rounded-full blur-[120px] -mr-40 -mt-40 pointer-events-none"></div>
+             
+             <div className="container mx-auto px-6 max-w-5xl relative z-10">
+               <FadeInWhenVisible>
+                 <div className="bg-white dark:bg-[#0B1120] rounded-[3rem] shadow-2xl p-8 md:p-14 border border-gray-100 dark:border-gray-800 relative overflow-hidden">
+                   {/* Decoration */}
+                   <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-600 to-brand-400"></div>
+                   
+                   <div className="text-center mb-12">
+                     <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 dark:text-white">{t.book}</h2>
+                     <p className="text-gray-500 dark:text-gray-400 text-lg">{lang === 'ar' ? 'أدخل بياناتك وسنتولى نحن كافة الترتيبات لضمان راحتك' : 'Enter your details and we will handle all arrangements for your comfort'}</p>
+                   </div>
+                   <BookingForm t={t} theme={theme} lang={lang} />
+                 </div>
+               </FadeInWhenVisible>
+             </div>
+          </section>
+
+          {/* Testimonials */}
+          <section className="py-24 bg-gray-100 dark:bg-[#060B14]">
+            <div className="container mx-auto px-6 overflow-hidden max-w-7xl">
+              <FadeInWhenVisible>
+                <div className="text-center mb-16">
+                   <h2 className="text-4xl md:text-5xl font-black mb-6 text-gray-900 dark:text-white">{t.testimonials}</h2>
+                   <div className="w-24 h-1.5 bg-gradient-to-r from-brand-600 to-brand-400 mx-auto rounded-full"></div>
+                </div>
+              </FadeInWhenVisible>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {reviews.map((review, i) => (
+                  <FadeInWhenVisible key={review.id} delay={i * 150}>
+                    <div className="bg-white dark:bg-[#0B1120] p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-800 h-full relative group hover:border-brand-500/50 transition-all duration-300 hover:-translate-y-2">
+                      <div className={`absolute -top-6 ${lang === 'ar' ? 'right-8' : 'left-8'} text-7xl text-brand-100 dark:text-brand-900/30 font-serif`}>"</div>
+                      <div className="flex items-center gap-1 mb-6 text-gold-400">
+                        {[...Array(review.rating)].map((_, idx) => <Star key={idx} size={20} fill="currentColor" />)}
+                      </div>
+                      <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-8 relative z-10 font-medium">
+                         {lang === 'ar' ? review.text : review.textEn}
+                      </p>
+                      <div className="flex items-center gap-4 mt-auto pt-6 border-t border-gray-100 dark:border-gray-800">
+                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                            {(lang === 'ar' ? review.name : review.nameEn).charAt(0)}
+                         </div>
+                         <p className="font-bold text-gray-900 dark:text-white text-xl">{lang === 'ar' ? review.name : review.nameEn}</p>
+                      </div>
+                    </div>
+                  </FadeInWhenVisible>
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    // --- STREAMING_CHUNK: Booking Form Logic ---
+    function BookingForm({ t, theme, lang }) {
+      const [status, setStatus] = useState('idle');
+      const [formData, setFormData] = useState({ mainName: '', mobile: '', passengers: [{ name: '', passport: '', nationality: 'saudi' }] });
+
+      const addPassenger = () => setFormData(p => ({ ...p, passengers: [...p.passengers, { name: '', passport: '', nationality: 'saudi' }] }));
+      const removePassenger = (i) => formData.passengers.length > 1 && setFormData(p => ({ ...p, passengers: p.passengers.filter((_, idx) => idx !== i) }));
+      const updatePassenger = (i, field, val) => { const newP = [...formData.passengers]; newP[i][field] = val; setFormData({ ...formData, passengers: newP }); };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setStatus('loading');
+        
+        const res = await apiCall('book', { payload: formData });
+        
+        if (res.success) {
+          setStatus('success');
+          setFormData({ mainName: '', mobile: '', passengers: [{ name: '', passport: '', nationality: 'saudi' }] });
+          setTimeout(() => setStatus('idle'), 5000);
+        } else {
+          setStatus('error');
+          alert(lang === 'ar' ? 'حدث خطأ أثناء الحجز، يرجى المحاولة لاحقاً وتأكد من رابط السكريبت' : 'An error occurred during booking, please try again later and check the script link.');
+        }
+      };
+
+      if (status === 'success') {
+        return (
+           <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+             <div className="w-32 h-32 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-8 border-4 border-green-500/30">
+               <CheckCircle size={64} className="text-green-500" />
+             </div>
+             <h3 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400 mb-4">{t.bookingSuccess}</h3>
+             <p className="text-gray-600 dark:text-gray-400 text-xl">{lang === 'ar' ? 'سيتواصل معك فريق الحجوزات قريباً لترتيب أدق التفاصيل.' : 'Our booking team will contact you shortly to arrange the fine details.'}</p>
+           </div>
+        );
+      }
+
+      const inputClass = "w-full p-4 md:p-5 text-lg rounded-2xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20 outline-none transition-all text-gray-900 dark:text-white font-medium";
+      const labelClass = "block text-sm font-bold mb-3 text-gray-700 dark:text-gray-300";
+
+      return (
+        <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+               <label className={labelClass}>{t.customerName}</label>
+               <input required type="text" value={formData.mainName} onChange={e => setFormData({...formData, mainName: e.target.value})} className={inputClass} placeholder={lang === 'ar' ? "الاسم الكامل" : "Full Name"} />
+            </div>
+            <div>
+               <label className={labelClass}>{t.mobile}</label>
+               <input required type="tel" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} className={inputClass} placeholder="05XXXXXXXX" dir="ltr" />
+            </div>
+          </div>
+          
+          <div className="bg-gray-50 dark:bg-[#060B14]/50 p-6 md:p-10 rounded-[2rem] border border-gray-200 dark:border-gray-800 shadow-inner">
+            <div className="flex justify-between items-center mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+               <h4 className="font-bold text-2xl flex items-center gap-3 text-gray-900 dark:text-white"><Users size={28} className="text-brand-500"/> {t.passengers}</h4>
+               <button type="button" onClick={addPassenger} className="text-sm bg-brand-100 dark:bg-brand-900/40 hover:bg-brand-200 dark:hover:bg-brand-800/60 text-brand-600 dark:text-brand-300 px-6 py-3 rounded-full flex items-center gap-2 transition-colors font-bold border border-brand-500/20">
+                  <Plus size={20} /> {t.addPassenger}
+               </button>
+            </div>
+            
+            <div className="space-y-6">
+               {formData.passengers.map((p, index) => (
+                 <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end bg-white dark:bg-[#0B1120] p-6 md:p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm animate-slide-up">
+                   <div className="md:col-span-4">
+                     <label className="block text-sm font-bold mb-3 text-gray-600 dark:text-gray-400">{t.passenger} {index + 1}</label>
+                     <input required type="text" placeholder={lang === 'ar' ? "الاسم" : "Name"} value={p.name} onChange={e => updatePassenger(index, 'name', e.target.value)} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none text-gray-900 dark:text-white" />
+                   </div>
+                   <div className="md:col-span-4">
+                     <label className="block text-sm font-bold mb-3 text-gray-600 dark:text-gray-400">{t.passport}</label>
+                     <input type="text" placeholder={lang === 'ar' ? "رقم الهوية" : "ID Number"} value={p.passport} onChange={e => updatePassenger(index, 'passport', e.target.value)} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none text-gray-900 dark:text-white" />
+                   </div>
+                   <div className="md:col-span-3">
+                     <label className="block text-sm font-bold mb-3 text-gray-600 dark:text-gray-400">{t.nationality}</label>
+                     <select value={p.nationality} onChange={e => updatePassenger(index, 'nationality', e.target.value)} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none text-gray-900 dark:text-white font-bold">
+                       <option value="saudi">{t.saudi}</option><option value="egyptian">{t.egyptian}</option><option value="other">{t.other}</option>
+                     </select>
+                   </div>
+                   <div className="md:col-span-1 flex justify-center pb-2">
+                     {formData.passengers.length > 1 && <button type="button" onClick={() => removePassenger(index)} className="p-4 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors"><Trash2 size={24} /></button>}
+                   </div>
+                 </div>
+               ))}
+            </div>
+          </div>
+          
+          <button type="submit" disabled={status === 'loading'} className="w-full bg-brand-600 hover:bg-brand-500 text-white py-6 rounded-2xl font-black text-2xl transition-all shadow-xl hover:shadow-brand-500/50 flex justify-center items-center gap-3 hover:-translate-y-1">
+            {status === 'loading' ? <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : t.sendBooking}
+          </button>
+        </form>
+      );
+    }
+
+    // --- STREAMING_CHUNK:Driver Login System ---
+    function DriverLogin({ t, lang, onLogin }) {
+      const [username, setUsername] = useState('');
+      const [pin, setPin] = useState('');
+      const [loading, setLoading] = useState(false);
+      
+      const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        const res = await apiCall('login', { username, password: pin });
+        setLoading(false);
+
+        if (res.success) {
+          onLogin(res.driverName);
+        } else {
+          alert(lang === 'ar' ? 'بيانات الدخول غير صحيحة، يرجى التأكد من اسم المستخدم وكلمة المرور المسجلة في شيت جوجل.' : 'Invalid login credentials. Please check your username and password.');
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4 py-20 bg-gray-50 dark:bg-[#060B14] relative overflow-hidden">
+          {/* Animated Background Elements */}
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-brand-600/10 rounded-full blur-[150px] -mr-60 -mt-60"></div>
+
+          <div className="bg-white dark:bg-[#0B1120] p-10 md:p-14 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-gray-800 w-full max-w-lg text-center relative z-10 animate-slide-up">
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-600 to-brand-400"></div>
+            
+            <div className="w-28 h-28 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-3xl flex items-center justify-center mx-auto mb-10 border border-brand-500/20 rotate-3 shadow-inner">
+               <Car size={56} />
+            </div>
+            
+            <h2 className="text-4xl font-black mb-4 text-gray-900 dark:text-white">{t.loginTitle}</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-12 text-lg">{lang === 'ar' ? 'بوابة مخصصة لشركاء النجاح' : 'Dedicated Portal for Success Partners'}</p>
+            
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="relative">
+                 <User className={`absolute ${lang === 'ar' ? 'right-5' : 'left-5'} top-1/2 transform -translate-y-1/2 text-gray-400`} size={24} />
+                 <input required type="text" placeholder={t.username} value={username} onChange={e => setUsername(e.target.value)} className={`w-full p-5 ${lang === 'ar' ? 'pr-14' : 'pl-14'} text-xl rounded-2xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none transition-all text-gray-900 dark:text-white font-bold`} dir="ltr" />
+              </div>
+              <div className="relative">
+                 <Menu className={`absolute ${lang === 'ar' ? 'right-5' : 'left-5'} top-1/2 transform -translate-y-1/2 text-gray-400`} size={24} />
+                 <input required type="password" placeholder={t.password} value={pin} onChange={e => setPin(e.target.value)} className={`w-full p-5 ${lang === 'ar' ? 'pr-14' : 'pl-14'} text-xl rounded-2xl bg-gray-50 dark:bg-[#060B14] border border-gray-200 dark:border-gray-700 focus:border-brand-500 outline-none tracking-[0.5em] transition-all text-gray-900 dark:text-white font-bold`} dir="ltr" />
+              </div>
+              
+              <button type="submit" disabled={loading} className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 py-5 rounded-2xl font-black text-xl transition-all mt-8 flex justify-center items-center gap-2 shadow-xl hover:-translate-y-1">
+                {loading ? <div className="w-8 h-8 border-4 border-gray-400 border-t-current rounded-full animate-spin"></div> : t.login}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // --- STREAMING_CHUNK:Driver Dashboard (Manifest Form) ---
+    function DriverDashboard({ t, user, lang, onManifestCreated }) {
+      const [loading, setLoading] = useState(false);
+      const [data, setData] = useState({
+        bookingNum: Math.floor(Math.random() * 10000).toString(),
+        driverPhone: '', driverId: '', driverName: user ? user.name : '',
+        carPlate: '', carColor: '', carType: 'هيونداي ستاريا',
+        from: 'مطار جدة', to: 'مكه المكرمه', flightNum: '',
+        date: new Date().toISOString().split('T')[0], day: 'السبت',
+        guestName: '',
+        passengers: Array(12).fill({ nat: '', id: '', name: '' })
+      });
+
+  
+      const updatePass = (index, field, value) => { const newP = [...data.passengers]; newP[index] = { ...newP[index], [field]: value }; setData({ ...data, passengers: newP }); };
+
+      const handleSaveAndGenerate = async () => {
+        setLoading(true);
+        const cleanData = { ...data, passengers: data.passengers.filter(p => p.name.trim() !== '') };
+        const res = await apiCall('saveManifest', { payload: cleanData });
+        setLoading(false);
+
+        if (res.success) {
+          onManifestCreated({ id: res.manifestId, ...data });
+        } else {
+          alert(lang === 'ar' ? "حدث خطأ أثناء الحفظ. تأكد من رابط سكريبت جوجل." : "Error saving. Please check Google Script link.");
+        }
+      };
+
+      return (
+        <div className="container mx-auto px-4 py-32 max-w-6xl">
+          <div className="bg-white dark:bg-[#0B1120] rounded-[3rem] shadow-2xl p-8 md:p-12 border border-gray-100 dark:border-gray-800 animate-fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-gray-200 dark:border-gray-800 pb-8 gap-4">
+               <h2 className="text-3xl md:text-4xl font-black flex items-center gap-4 text-gray-900 dark:text-white"><FileText className="text-brand-500" size={40}/> {t.manifestTitle}</h2>
+               <div className="px-6 py-3 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-2xl font-bold text-lg border border-brand-500/20 shadow-sm">{lang === 'ar' ? 'مرحباً، الكابتن' : 'Welcome, Captain'} {user?.name}</div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              <InputGroup label="رقم الحجز" val={data.bookingNum} onChange={v => setData({...data, bookingNum: v})} />
+              <InputGroup label="التاريخ" type="date" val={data.date} onChange={v => setData({...data, date: v})} />
+              <InputGroup label="اليوم" val={data.day} onChange={v => setData({...data, day: v})} />
+              <InputGroup label="جهة القدوم" val={data.from} onChange={v => setData({...data, from: v})} />
+              <InputGroup label="جهة الوصول" val={data.to} onChange={v => setData({...data, to: v})} />
+              <InputGroup label="رقم الرحلة" val={data.flightNum} onChange={v => setData({...data, flightNum: v})} />
+              <div className="md:col-span-3"><InputGroup label={lang === 'ar' ? 'الضيف الأساسي (صاحب الحجز)' : 'Main Guest (Booking Owner)'} val={data.guestName} onChange={v => setData({...data, guestName: v})} /></div>
+            </div>
+
+            <h3 className={`font-black text-2xl mb-6 text-brand-600 dark:text-brand-400 border-${lang === 'ar' ? 'r' : 'l'}-4 border-brand-500 p${lang === 'ar' ? 'r' : 'l'}-4`}>{lang === 'ar' ? 'بيانات السائق والسيارة' : 'Driver & Vehicle Details'}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 p-8 bg-gray-50 dark:bg-[#060B14] rounded-[2rem] border border-gray-200 dark:border-gray-800 shadow-inner">
+              <InputGroup label="اسم السائق" val={data.driverName} onChange={v => setData({...data, driverName: v})} />
+              <InputGroup label="هوية السائق" val={data.driverId} onChange={v => setData({...data, driverId: v})} />
+              <InputGroup label="جوال السائق" val={data.driverPhone} onChange={v => setData({...data, driverPhone: v})} />
+              
+              <div>
+                 <label className="block text-sm font-bold mb-3 text-gray-700 dark:text-gray-300">{lang === 'ar' ? 'نوع السيارة' : 'Car Type'}</label>
+                 <select value={data.carType} onChange={e => setData({...data, carType: e.target.value})} className="w-full p-4 text-lg rounded-xl bg-white dark:bg-[#0B1120] border border-gray-200 dark:border-gray-700 outline-none text-gray-900 dark:text-white font-bold">
+                    <option value="هيونداي 7">هيونداي 7</option>
+                    <option value="جي ام سي يوكون">GMC يوكون</option>
+                    <option value="هيونداي 8">هيونداي 8</option>
+                   <option value="فورد تورنيو">فورد تورنيو</option>
+                 </select>
+              </div>
+              <InputGroup label="لون السيارة" val={data.carColor} onChange={v => setData({...data, carColor: v})} />
+              <InputGroup label="رقم اللوحة" val={data.carPlate} onChange={v => setData({...data, carPlate: v})} />
+            </div>
+
+            <h3 className={`font-black text-2xl mb-6 text-brand-600 dark:text-brand-400 border-${lang === 'ar' ? 'r' : 'l'}-4 border-brand-500 p${lang === 'ar' ? 'r' : 'l'}-4`}>{lang === 'ar' ? 'بيانات المرافقين (كشف الركاب)' : 'Passengers Details (Manifest)'}</h3>
+            <div className="overflow-x-auto mb-12 border border-gray-200 dark:border-gray-800 rounded-[2rem] shadow-inner bg-white dark:bg-[#0B1120]">
+              <table className="w-full text-base text-center border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 dark:bg-[#060B14] text-gray-700 dark:text-gray-300">
+                    <th className="p-5 border-b border-gray-200 dark:border-gray-800 w-16 font-black text-lg">#</th>
+                    <th className={`p-5 border-b border-${lang === 'ar' ? 'r' : 'l'} border-gray-200 dark:border-gray-800 font-black text-lg`}>{lang === 'ar' ? 'الاسم' : 'Name'}</th>
+                    <th className={`p-5 border-b border-${lang === 'ar' ? 'r' : 'l'} border-gray-200 dark:border-gray-800 w-64 font-black text-lg`}>{lang === 'ar' ? 'رقم الهوية / الجواز' : 'ID / Passport'}</th>
+                    <th className={`p-5 border-b border-${lang === 'ar' ? 'r' : 'l'} border-gray-200 dark:border-gray-800 w-40 font-black text-lg`}>{lang === 'ar' ? 'الجنسية' : 'Nationality'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.passengers.map((p, i) => (
+                    <tr key={i} className="border-b border-gray-200 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                      <td className="p-3 font-bold text-gray-500 bg-gray-50 dark:bg-[#060B14]">{i + 1}</td>
+                      <td className={`p-0 border-${lang === 'ar' ? 'r' : 'l'} border-gray-200 dark:border-gray-800`}><input type="text" value={p.name} onChange={e => updatePass(i, 'name', e.target.value)} className="w-full p-4 bg-transparent outline-none focus:bg-gray-100 dark:focus:bg-gray-800 text-gray-900 dark:text-white font-semibold" /></td>
+                      <td className={`p-0 border-${lang === 'ar' ? 'r' : 'l'} border-gray-200 dark:border-gray-800`}><input type="text" value={p.id} onChange={e => updatePass(i, 'id', e.target.value)} className="w-full p-4 bg-transparent outline-none text-center focus:bg-gray-100 dark:focus:bg-gray-800 text-gray-900 dark:text-white font-semibold" /></td>
+                      <td className={`p-0 border-${lang === 'ar' ? 'r' : 'l'} border-gray-200 dark:border-gray-800`}><input type="text" value={p.nat} onChange={e => updatePass(i, 'nat', e.target.value)} className="w-full p-4 bg-transparent outline-none text-center focus:bg-gray-100 dark:focus:bg-gray-800 text-gray-900 dark:text-white font-semibold" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button onClick={handleSaveAndGenerate} disabled={loading} className="w-full bg-brand-600 hover:bg-brand-500 text-white py-6 rounded-2xl font-black text-2xl transition-all shadow-xl hover:shadow-brand-500/40 flex justify-center items-center gap-4 hover:-translate-y-1">
+               {loading ? <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : t.generateManifest}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function InputGroup({ label, val, onChange, type = "text" }) {
+      return (
+        <div>
+          <label className="block text-sm font-bold mb-3 text-gray-700 dark:text-gray-300">{label}</label>
+          <input type={type} value={val} onChange={e => onChange(e.target.value)} className="w-full p-4 text-lg rounded-xl bg-white dark:bg-[#0B1120] border border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-shadow text-gray-900 dark:text-white font-semibold" />
+        </div>
+      );
+    }
+
+    // --- STREAMING_CHUNK: Printable Manifest View (Stays strict for PDF) ---
+    function ManifestView({ data, t, lang, onBack }) {
+      const qrUrl = `${window.location.origin}${window.location.pathname}?manifest=${data.id}`;
+      return (
+        <div className="bg-gray-100 dark:bg-gray-900 min-h-screen py-8 pt-24 print:py-0 print:bg-white text-black" dir="rtl">
+          <div className="container mx-auto px-4 mb-8 print:hidden flex justify-between items-center max-w-4xl">
+             <button onClick={onBack} className="bg-gray-800 text-white px-6 py-2.5 rounded-xl shadow-lg font-bold hover:bg-gray-700 transition-colors">{lang === 'ar' ? 'رجوع' : 'Back'}</button>
+             <button onClick={() => window.print()} className="bg-brand-600 hover:bg-brand-500 text-white px-8 py-2.5 rounded-xl shadow-[0_0_15px_rgba(14,165,233,0.4)] font-bold flex items-center gap-2 transition-colors"><FileText size={20}/> {lang === 'ar' ? 'طباعة / حفظ كـ PDF' : 'Print / Save PDF'}</button>
+          </div>
+          
+          {/* الكشوفات الورقية تبقى كما هي لضمان الاعتماد الرسمي */}
+          {/* Page 1 */}
+          <div className="print-container bg-white shadow-2xl mx-auto p-8 mb-8 page-break border border-gray-200 print:border-none print:shadow-none font-arabic relative overflow-hidden text-black rounded-xl print:rounded-none">
+            <div className="flex justify-between items-start mb-6 border-b-2 border-black pb-4"><div className="text-right flex-1"><h1 className="text-2xl font-bold mb-1">شركة المسار الامن</h1><p className="text-sm">للنقل المتخصص</p><p className="text-sm">ترخيص رقم : 35/00008556</p></div><div className="text-center flex-1"><h2 className="text-3xl font-bold mb-2 mt-2">كشف الركاب</h2><p className="font-bold border border-black inline-block px-4 py-1">رقم الحجز: {data.bookingNum || '---'}</p></div><div className="text-left flex-1 flex flex-col items-end"><div className="text-2xl font-bold text-blue-900 mb-1">BST</div><div className="text-xs font-bold text-blue-900 uppercase">Blue Sky Transport</div><div className="mt-2 border-2 border-black p-1.5 bg-white"><QRCodeSVG value={qrUrl} size={70} level={"L"} /></div></div></div>
+            <div className="grid grid-cols-4 gap-2 mb-4 text-sm font-bold border border-black p-2 bg-gray-50"><div className="text-center border-l border-black">اليوم: {data.day || '---'}</div><div className="text-center border-l border-black">التاريخ: {data.date || '---'}</div><div className="text-center border-l border-black">جهة القدوم: {data.from || '---'}</div><div className="text-center">جهة الوصول: {data.to || '---'}</div></div>
+            <div className="grid grid-cols-3 gap-2 mb-6 text-sm font-bold"><div className="border border-black p-2">الضيف: {data.guestName || '---'}</div><div className="border border-black p-2">رقم الرحلة: {data.flightNum || '---'}</div><div className="border border-black p-2 text-left" dir="ltr">{data.driverPhone || '---'}</div></div>
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1"><div className="bg-gray-200 text-center font-bold border border-black border-b-0 py-1">بيانات السائق</div><table className="w-full text-center border-collapse print-table text-sm"><thead><tr className="bg-gray-100"><th className="border border-black p-1">السائق</th><th className="border border-black p-1">الهويه</th><th className="border border-black p-1">الجوال</th></tr></thead><tbody><tr><td className="border border-black p-2">{data.driverName || '-'}</td><td className="border border-black p-2">{data.driverId || '-'}</td><td className="border border-black p-2" dir="ltr">{data.driverPhone || '-'}</td></tr></tbody></table></div>
+              <div className="flex-1"><div className="bg-gray-200 text-center font-bold border border-black border-b-0 py-1">بيانات السيارة</div><table className="w-full text-center border-collapse print-table text-sm"><thead><tr className="bg-gray-100"><th className="border border-black p-1">السيارة</th><th className="border border-black p-1">اللون</th><th className="border border-black p-1">رقم اللوحه</th></tr></thead><tbody><tr><td className="border border-black p-2">{data.carType || '-'}</td><td className="border border-black p-2">{data.carColor || '-'}</td><td className="border border-black p-2">{data.carPlate || '-'}</td></tr></tbody></table></div>
+            </div>
+            <div className="bg-gray-200 text-center font-bold border border-black border-b-0 py-1">بيانات المرافقين</div>
+            <table className="w-full text-center border-collapse print-table text-sm mb-6"><thead><tr className="bg-gray-100"><th className="border border-black p-2 w-10">#</th><th className="border border-black p-2">الاسم</th><th className="border border-black p-2 w-40">رقم الهوية</th><th className="border border-black p-2 w-32">الجنسية</th></tr></thead><tbody>
+                 {(data.passengers && data.passengers.length > 0 ? data.passengers : Array(12).fill({})).map((p, i) => (<tr key={i} className="h-8"><td className="border border-black">{i + 1}</td><td className="border border-black text-right px-3">{p?.name || ''}</td><td className="border border-black">{p?.id || ''}</td><td className="border border-black">{p?.nat || ''}</td></tr>))}
+                 {data.passengers && data.passengers.length < 12 && Array(12 - data.passengers.length).fill({}).map((_, i) => (<tr key={'empty'+i} className="h-8"><td className="border border-black">{data.passengers.length + i + 1}</td><td className="border border-black"></td><td className="border border-black"></td><td className="border border-black"></td></tr>))}
+            </tbody></table>
+            <div className="border-t-2 border-black pt-4 text-xs font-bold text-center"><p className="text-red-700 print:text-black mb-1">ملاحظه هامه: في حاله عدم تطابق بيانات الضيف مع الاثبات تكن عرضه للجزاء وهذا تعهد منا بذلك</p><p className="mb-2">شاكرين لكم حسن تعاونكم معنا</p><p className="text-[10px] text-gray-500 print:text-black">امر تشغيل شامل كشف الركاب تم إصداره الكترونيا من السيستم</p><p className="text-[10px] text-gray-500 print:text-black mt-1">Blue Sky Transport | C.R: 35/00008556</p></div>
+          </div>
+
+          {/* Page 2 */}
+          <div className="print-container bg-white shadow-2xl mx-auto p-8 mb-8 page-break border border-gray-200 print:border-none print:shadow-none font-arabic text-black text-justify leading-relaxed rounded-xl print:rounded-none">
+            <div className="flex justify-between items-start mb-10 border-b-2 border-black pb-4"><div className="text-right"><h1 className="text-2xl font-bold mb-1">شركة المسار الامن</h1><p className="text-sm">للنقل المتخصص</p><p className="text-sm">ترخيص رقم : 35/00008556</p></div><div className="text-center"><div className="text-2xl font-bold text-blue-900 mb-1">BST</div><div className="text-xs font-bold text-blue-900 uppercase">Blue Sky Transport</div></div><div className="text-left font-bold border border-black p-2 mt-4 text-sm bg-gray-50">التاريخ: {data.date || '---'}</div></div>
+            <h2 className="text-2xl font-bold text-center mb-8 underline decoration-double">عقد نقل على الطرق البرية</h2><p className="mb-6 font-semibold">تم ابرام هذا العقد بين المتعاقدين بناء على المادة (39) التاسعة والثلاثون من اللائحة المنظمة لنشاط النقل المتخصص وتأجير وتوجيه الحافلات وبناء على الفقرة (1) من المادة (39) والتي تنص على أن يجب على الناقل ابرام عقد نقل مع الأطراف المحددين في المادة (40) قبل تنفيذ عمليات النقل على الطرق البرية وبما لا يخالف أحكام هذه اللائحة ووفقا لآلية التي تحددها هيئة النقل وبناء على ما سبق تم ابرام عقد النقل بين الأطراف الآتية:</p>
+            <div className="mb-6 space-y-2 font-bold bg-gray-50 p-5 border border-black"><p>الطرف الأول /شركة المسار الامن للنقل المتخصص ترخيص رقم: 35/00008556</p><p>الطرف الثاني / {data.guestName || '..............................'}</p></div>
+            <p className="mb-6 font-semibold">اتفق الطرفان على ان ينفذ الطرف الأول عملية النقل للطرف الثاني مع مرافقيه وذويهم من الموقع المحدد مسبقا مع الطرف الثاني وتوصيلهم إلى الجهة المحددة بالعقد</p>
+            <div className="flex justify-around font-bold mb-8 text-lg bg-gray-100 p-4 border border-black"><div>النقل من / {data.from || '................'}</div><div>وصولا الى / {data.to || '................'}</div></div>
+            <div className="border border-black p-5 mb-10 text-sm font-bold bg-gray-50 leading-loose"><p className="mb-3">في حال الغاء التعاقد لاي سبب شخصي او اسباب اخرى تتعلق في الحجوزات او الانظمة تكون سياسة الالغاء والاستبدال حسب نظام وزارة التجارة السعودي.</p><p className="mb-3">في حال الحجز وتم الالغاء قبل موعد الرحلة باكثر من 24 ساعة يتم استرداد المبلغ كامل.</p><p>في حالة طلب الطرف الثاني الحجز من خلال الموقع الالكتروني للمؤسسة يعتبر الحجز وموافقته على الشروط والاحكام بالموقع الالكتروني هو موافقة على هذا العقد لتنفيذ عملية النقل المتفق عليها مع الطرف الأول بواسطة حافلات المؤسسة المرخصة والمتوافقة مع الاشتراطات المقررة من هيئة النقل.</p></div>
+            <div className="text-center text-[10px] text-gray-500 print:text-black mt-20 pt-4 border-t border-gray-300"><p>امر تشغيل شامل كشف الركاب تم إصداره الكترونيا من السيستم</p><p>Blue Sky Transport C.R: 35/00008556</p></div>
+          </div>
+
+          {/* Page 3 */}
+          <div className="print-container bg-white shadow-2xl mx-auto p-8 border border-gray-200 print:border-none print:shadow-none font-arabic text-black rounded-xl print:rounded-none">
+             <div className="flex justify-between items-start mb-8 border-b-2 border-black pb-4"><div className="text-right"><h1 className="text-2xl font-bold mb-1">شركة المسار الامن</h1><p className="text-sm">للنقل المتخصص</p><p className="text-sm">ترخيص رقم : 35/00008556</p></div><div className="text-center mt-2"><h2 className="text-xl font-bold border border-black px-6 py-2 inline-block bg-gray-100 shadow-sm">سجل الفحص اليومي للسيارة</h2></div><div className="text-left flex flex-col items-end"><div className="text-2xl font-bold text-blue-900 mb-1">BST</div><div className="border border-black px-3 py-1 text-sm font-bold mt-2 bg-gray-50">التاريخ: {data.date || '---'}</div><div className="border border-black px-3 py-1 text-sm font-bold mt-1 bg-gray-50">رقم الحجز: {data.bookingNum || '---'}</div></div></div>
+            <div className="flex justify-between font-bold border border-black p-3 mb-8 bg-gray-100 text-sm"><div>السائق: {data.driverName || '---'}</div><div>رقم اللوحه: {data.carPlate || '---'}</div></div>
+            <div className="space-y-6 text-sm font-bold">
+              <div><h3 className="mb-2 bg-gray-200 p-1.5 border border-black inline-block px-4">أولاً: فحص مؤشرات لوحة القيادة</h3><table className="w-full text-center border-collapse print-table"><thead><tr className="bg-gray-100"><th className="border border-black p-2 w-1/4">البند</th><th className="border border-black p-2 w-1/4">سليم</th><th className="border border-black p-2 w-1/4">غير سليم</th><th className="border border-black p-2 w-1/4">ملاحظات</th></tr></thead><tbody>{['مؤشر الوقود', 'مؤشر الحرارة', 'مؤشر ضغط الزيت', 'لمبة فحص المحرك', 'ABS', 'لمبات التحذير'].map(item => (<tr key={item}><td className="border border-black p-1.5 text-right pr-3">{item}</td><td className="border border-black p-1.5 text-lg">✓</td><td className="border border-black p-1.5"></td><td className="border border-black p-1.5"></td></tr>))}</tbody></table></div>
+              <div><h3 className="mb-2 bg-gray-200 p-1.5 border border-black inline-block px-4">ثانياً: الفحص الخارجي</h3><table className="w-full text-center border-collapse print-table"><thead><tr className="bg-gray-100"><th className="border border-black p-2 w-1/4">البند</th><th className="border border-black p-2 w-1/4">سليم</th><th className="border border-black p-2 w-1/4">غير سليم</th><th className="border border-black p-2 w-1/4">ملاحظات</th></tr></thead><tbody>{['الإطارات وضغط الهواء', 'الأنوار الأمامية والخلفية', 'الإشارات التحذيرية', 'الزجاج والمرايا', 'عدم وجود تسريبات'].map(item => (<tr key={item}><td className="border border-black p-1.5 text-right pr-3">{item}</td><td className="border border-black p-1.5 text-lg">✓</td><td className="border border-black p-1.5"></td><td className="border border-black p-1.5"></td></tr>))}</tbody></table></div>
+              <div><h3 className="mb-2 bg-gray-200 p-1.5 border border-black inline-block px-4">ثالثاً: أدوات ومتطلبات الأمن والسلامة</h3><table className="w-full text-center border-collapse print-table"><thead><tr className="bg-gray-100"><th className="border border-black p-2 w-1/4">البند</th><th className="border border-black p-2 w-1/4">سليم</th><th className="border border-black p-2 w-1/4">غير سليم</th><th className="border border-black p-2 w-1/4">ملاحظات</th></tr></thead><tbody>{['طفاية حريق', 'مثلث تحذير', 'حقيبة إسعافات أولية', 'مطرقة كسر الزجاج', 'أحزمة الأمان'].map(item => (<tr key={item}><td className="border border-black p-1.5 text-right pr-3">{item}</td><td className="border border-black p-1.5 text-lg">✓</td><td className="border border-black p-1.5"></td><td className="border border-black p-1.5"></td></tr>))}</tbody></table></div>
+            </div>
+            <div className="mt-12 border-2 border-black p-6 bg-gray-50"><h3 className="font-bold underline mb-3 text-xl">إقرار</h3><p className="mb-6 font-bold text-base">أقر أنا السائق أعلاه بأنني قمت بفحص الحافلة والتأكد من سلامتها وجاهزيتها قبل التشغيل.</p><div className="flex justify-between font-bold text-lg"><div>اسم السائق: {data.driverName || '..............................'}</div><div>التوقيع: ..............................</div></div></div>
+            <div className="text-center text-[10px] text-gray-500 print:text-black mt-10 pt-4 border-t border-gray-300"><p>سجل فحص يومي للسيارة تم إصداره إلكترونيا من السيستم</p><p>Blue Sky Transport C.R: 35/00008556</p></div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- STREAMING_CHUNK:Footer & Utilities ---
+    function Footer({ t, lang, isRTL }) {
+      return (
+        <footer className="bg-gray-900 text-white pt-24 pb-12 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+          <div className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-16 mb-16 relative z-10 max-w-6xl">
+            <div>
+               <div className="flex items-center gap-3 mb-6">
+                 <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-black text-2xl shadow-lg">M</div>
+                 <span className="font-black text-2xl text-white">{lang === 'ar' ? 'المسار' : 'Safe'} <span className="text-brand-500">{lang === 'ar' ? 'الآمن' : 'Path'}</span></span>
+               </div>
+               <p className="text-gray-400 mb-6 leading-relaxed text-lg font-medium">{t.footerDesc}</p>
+            </div>
+            <div>
+               <h4 className="text-2xl font-bold mb-8 text-white">{t.contact}</h4>
+               <ul className="space-y-5 text-gray-400">
+                  <li className="flex items-start gap-4"><MapPin size={28} className="text-brand-500 shrink-0"/> <span className="text-lg font-medium">{t.addressText}</span></li>
+                  <li className="flex items-center gap-4 text-xl font-bold text-white" dir="ltr"><Phone size={28} className="text-brand-500"/> +966 59 914 1695</li>
+               </ul>
+            </div>
+            <div>
+               <h4 className="text-2xl font-bold mb-8 text-white">{lang === 'ar' ? 'تواصل اجتماعي' : 'Social Media'}</h4>
+              
+                 <div className="flex gap-5">
+                  <a href="#" className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center hover:bg-brand-600 transition-all hover:scale-110 shadow-lg border border-gray-700 text-gray-300 hover:text-white"><span className="font-bold text-lg"></span>
+  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                  </a>
+                  <a href="#" className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center hover:bg-white transition-all hover:scale-110 shadow-lg border border-gray-700 text-gray-300 hover:text-gray-900"><span className="font-bold text-lg"></span>
+                  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.77 0 2.89 2.89 0 0 1 2.89-2.89h.57V8.58h-.57a6.34 6.34 0 1 0 6.34 6.34V9.25a7.35 7.35 0 0 0 4.21 1.34V6.9a5.33 5.33 0 0 1-1.34-.21z"/></svg>
+                  </a>
+                  <a href="#" className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center hover:bg-pink-600 transition-all hover:scale-110 shadow-lg border border-gray-700 text-gray-300 hover:text-white"><span className="font-bold text-lg"></span>
+                  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.77 1.683 4.918 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.918 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.012-3.584.07-4.849.149-3.26 1.701-4.772 4.919-4.92 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.015 7.053.072 3.655.225 1.63 2.252.477 5.65.019 6.93 0 7.339 0 10.6c0 3.259.015 3.667.072 4.947.153 3.398 2.18 5.423 5.578 5.576 1.28.058 1.689.073 4.947.073 3.259 0 3.668-.015 4.948-.073 3.396-.153 5.422-2.178 5.575-5.576.058-1.28.073-1.689.073-4.948 0-3.259-.015-3.667-.073-4.947-.154-3.398-2.18-5.423-5.578-5.576C15.667.015 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                  </a>
+               </div>
+            </div>
+          </div>
+          <div className="text-center text-gray-500 border-t border-gray-800 pt-8 text-sm font-bold">© {new Date().getFullYear()} {t.title}. {lang === 'ar' ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}</div>
+        </footer>
+      );
+    }
+    
+    function WhatsAppButton() { 
+       return (
+          <a href="https://wa.me/966599141695" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-8 z-50 bg-green-500 hover:bg-green-400 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] hover:scale-110 hover:-translate-y-2 transition-all cursor-pointer" title="تواصل عبر واتساب">
+             <MessageCircle size={36} />
+          </a>
+       ); 
+    }
+    
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
